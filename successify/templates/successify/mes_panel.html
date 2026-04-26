@@ -1,4 +1,5 @@
-<div id="mes-drawer" class="drawer" data-codigo="{{ mes.codigo }}">
+<div id="mes-drawer" class="drawer" data-codigo="{{ mes.codigo }}"
+    style="{% if mes.cerrado %} background-color: #fff9c4; border-color: #fbc02d;{% endif %}">
     <div class="drawer-content">
         <div class="drawer-header">
             <div class="cal-icon">

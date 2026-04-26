@@ -60,25 +60,23 @@
 
 <!-- #Vista mes -->
 <script>
-function abrirMes(codigo) {
+function abrirMes(codigoMes, codigoGasto) {
     const panelExistente = document.querySelector('.drawer');
     
     if (panelExistente) {
-        // Leemos el código que guardamos en el atributo data-codigo
         const codigoAbierto = panelExistente.getAttribute('data-codigo');
-
-        if (codigoAbierto === codigo) {
-            // SI ES EL MISMO: Ejecutamos la función de cerrar que ya tienes
+        // Usamos codigoMes que es el primer argumento
+        if (codigoAbierto === codigoMes) {
             cerrarPanel();
-            return; // IMPORTANTE: Detenemos la ejecución aquí (no sigue al fetch)
+            return; 
         } else {
-            // SI ES OTRO: Lo borramos rápido para dejar espacio al nuevo
             panelExistente.remove();
         }
     }
 
-    // Si llegamos aquí, es porque no había panel o era de otro mes
-    fetch(`/mes/${codigo}/`)
+    // IMPORTANTE: Ahora la URL debe enviar ambos códigos
+    // Tu servidor espera: /mes/CODIGO_MES/CODIGO_GASTO/
+    fetch(`/mes/${codigoMes}/${codigoGasto}/`)
         .then(response => response.text())
         .then(html => {
             document.body.insertAdjacentHTML('beforeend', html);

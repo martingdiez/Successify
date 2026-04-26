@@ -27,11 +27,11 @@ def index(request):
     """La página de inicio para Successus"""
     return render(request, 'successify/index.html')
 
-def mes(request, codigo, gasto):
+def mes(request, codigo_mes, codigo_movimiento):
     """Vista completa de toda la información de un mes"""
     
     # 1. Buscamos el mes específico por su código.
-    mes_obj = get_object_or_404(Mes, codigo=codigo, owner=request.user)
+    mes_obj = get_object_or_404(Mes, codigo=codigo_mes, owner=request.user)
     nombre_mes = MESES_ES.get(mes_obj.month,"random")
     
     # 2. Buscamos los registros que pertenecen a ese mes
@@ -50,6 +50,7 @@ def mes(request, codigo, gasto):
         'ingresos_mes': ingresos_mes,
         'total_ingresos': total_ingresos,
         'balance': total_ingresos - total_gastos,
+        'codigo_movimiento': codigo_movimiento,
     }
 
     # Nota: El primer argumento de render es el nombre del ARCHIVO .html

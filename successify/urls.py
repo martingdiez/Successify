@@ -12,8 +12,8 @@ urlpatterns = [
     path('', views.index, name='index'),
     #Página resumen
     path('resumen/', views.resumen, name='resumen'),
-    #Vista mes
-    path('mes/<str:codigo>/', views.mes, name='mes'),
+    #Vista mes en modo panel
+    path('mes/<str:codigo_mes>/<str:codigo_movimiento>/', views.mes, name='mes'),
     #Cambiar estado mes
     path('cambiar-estado-mes/<str:codigo>/', views.cambiar_estado_mes, name='cambiar_estado_mes'),
     #Página que muestra el balance del mes en curso
