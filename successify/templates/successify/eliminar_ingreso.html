@@ -1,0 +1,17 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+    <p>Eliminar ingreso</p>
+    <p>¿Seguro que quieres eliminar este ingreso?</p>
+    <p><b>{{ ingreso }}</b></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type='submit'> Si, eliminar</button>
+    </form>
+
+    <a href="{% url 'successify:ingreso' ingreso.codigo %}">Cancelar</a>
+    
+{% endblock content %}
+

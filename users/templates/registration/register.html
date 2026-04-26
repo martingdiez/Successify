@@ -1,0 +1,12 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+    <form action="{% url 'users:register' %}" method='post'>
+        {% csrf_token %}
+        {{ form.as_div}}
+
+        <button name='submit'>Registrarse</button>
+    </form>
+
+{% endblock content %}

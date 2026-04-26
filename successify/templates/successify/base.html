@@ -1,0 +1,93 @@
+<p>
+    <a href="{% url 'successify:index' %}"
+        style="text-decoration: none; color: #333; padding: 8px 8px">
+        <strong>Successify</strong></a> -
+    {% if user.is_authenticated %}
+        Hola, {{ user.username}}.
+        <a href="{% url 'successify:resumen' %}">Resumen</a> -
+        <a href="{% url 'successify:gastos' %}">Gastos</a> -
+        <a href="{% url 'successify:ingresos' %}">Ingresos</a> -
+        <a href="{% url 'successify:balance' %}">Balance</a>
+        {% else %}
+        <a href="{% url 'users:login' %}">Inicia sesión</a>
+        <a href="{% url 'users:register' %}">Regístrate</a>
+    {% endif %} 
+
+
+</p>
+
+{% if messages %}
+    <div id="toast-container" style="position: fixed; top: 20px; left:50%; transform: translateX(-50%); z-index: 9999;">
+        {% for message in messages %}
+            <div class="toast-item" style="
+                background: #333; 
+                color: white; 
+                padding: 12px 20px; 
+                margin-bottom: 10px; 
+                border-radius: 4px; 
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                min-width: 200px;
+                border-left: 5px solid {% if message.tags == 'error' %}#d9534f{% else %}#5cb85c{% endif %};
+                ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Desvanecer y eliminar la notificación después de 3 segundos
+        setTimeout(function() {
+            const container = document.getElementById('toast-container');
+            if (container) {
+                container.style.transition = "opacity 0.5s ease";
+                container.style.opacity = "0";
+                setTimeout(() => container.remove(), 500);
+            }
+        }, 3000);
+    </script>
+{% endif %}
+
+{% block content %} {% endblock content %}
+
+{% if user.is_authenticated %}
+    <hr />
+    <form action=" {% url "users:logout" %}" method='post'>
+        {% csrf_token %}
+        <button name='submit'>Cerrar sesión</button>
+    </form>
+{% endif %}
+
+<!-- #Vista mes -->
+<script>
+function abrirMes(codigo) {
+    // 1. Buscamos si ya hay un panel abierto y lo eliminamos de inmediato
+    const panelExistente = document.querySelector('.drawer');
+    if (panelExistente) {
+        panelExistente.remove();
+    }
+
+    // 2. Pedimos el nuevo panel usando el CÓDIGO
+    fetch(`/mes/${codigo}/`)
+        .then(response => response.text())
+        .then(html => {
+            document.body.insertAdjacentHTML('beforeend', html);
+            // Usamos un tiempo mínimo para que la animación de entrada funcione
+            setTimeout(() => {
+                const nuevoPanel = document.querySelector('.drawer');
+                if (nuevoPanel) {
+                    nuevoPanel.classList.add('active');
+                }
+            }, 10);
+        });
+    }
+
+    function cerrarPanel() {
+        const drawer = document.querySelector('.drawer');
+        if (drawer) {
+            drawer.classList.remove('active');
+            // Lo borramos del mapa tras la animación (300ms es la duración del transition CSS)
+            setTimeout(() => drawer.remove(), 300); 
+        }
+    }
+</script>

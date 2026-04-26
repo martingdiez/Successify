@@ -1,0 +1,76 @@
+<div id="mes-drawer" class="drawer">
+    <div class="drawer-content">
+        <div class="drawer-header">
+            <div class="cal-icon">
+                <span class="cal-month">{{ nombre_mes|slice:":3" }}</span>
+                <span class="cal-day">{{ mes.year }}</span>
+            </div>
+            <h2>{{nombre_mes}}</h2>
+            <button onclick="cerrarPanel()" class="btn-close">&times;</button>
+        </div>
+
+        <hr>
+
+        <div class="drawer-body">
+            <div class="stat-item">
+                <span>Ingresos:</span>
+                <span class="monto-pos">{{ total_ingresos }}€</span>
+            </div>
+            <div class="stat-item">
+                <span>Gastos:</span>
+                <span class="monto-neg">{{ total_gastos }}€</span>
+            </div>
+            <div class="balance-box">
+                <strong>Balance: {{ balance }}€</strong>
+            </div>
+
+            <form action="{% url 'successify:cambiar_estado_mes' mes.codigo %}" method="post" style="margin-top: 30px;">
+                {% csrf_token %}
+                {% if mes.cerrado %}
+                    <button type="submit" class="btn-open">🔓 Abrir Mes</button>
+                {% else %}
+                    <button type="submit" class="btn-lock">🔒 Cerrar Mes</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .drawer {
+        position: fixed;
+        right: -400px; /* Escondido por defecto */
+        top: 0;
+        width: 350px;
+        height: 100%;
+        background: white;
+        box-shadow: -2px 0 15px rgba(0,0,0,0.1);
+        transition: right 0.3s ease;
+        z-index: 10000;
+        border-left: 1px solid #eee;
+    }
+    
+    .drawer.active { right: 0; }
+
+    .drawer-content { padding: 25px; font-family: sans-serif; }
+
+    .drawer-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+
+    /* Estilo sutil de calendario */
+    .cal-icon {
+        border: 1px solid #333;
+        border-radius: 4px;
+        text-align: center;
+        min-width: 50px;
+        overflow: hidden;
+    }
+    .cal-month { background: #333; color: white; display: block; font-size: 10px; padding: 2px; }
+    .cal-day { font-size: 16px; font-weight: bold; padding: 5px; display: block; }
+
+    .stat-item { display: flex; justify-content: space-between; margin: 10px 0; font-size: 15px; }
+    .balance-box { background: #f9f9f9; padding: 15px; border-radius: 4px; text-align: center; margin-top: 20px; border: 1px solid #eee;}
+
+    .btn-lock { width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
+    .btn-open { width: 100%; background: white; color: #333; border: 1px solid #333; padding: 10px; cursor: pointer; border-radius: 4px; }
+    .btn-close { background: none; border: none; font-size: 25px; cursor: pointer; margin-left: auto; }
+</style>

@@ -1,0 +1,88 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+<div style="display: grid; grid-template-columns: max-content max-content max-content max-content; gap: 50px;">    
+    <div class="columna-mes-actual">
+        <h3>🗓️Mes actual</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                <a href="{% url 'successify:ingresos' %}"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                    <strong style="white-space: nowrap;">Ingresos</strong>
+                    <span>{{ total_ingreso_mes }}€</span>
+                </a>
+            </li>
+            <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                <a href="{% url 'successify:gastos' %}"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                    <strong style="white-space: nowrap;">Gastos</strong>
+                    <span>{{ total_gasto_mes }}€</span>
+                </a>
+            </li>
+            <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                <a href="{% url 'successify:balance' %}"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                    <strong style="white-space: nowrap;">Balance</strong>
+                    <span>{{ balance }}€</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="columna-ingresos-fijos">
+        <h3>📈 Ingresos Fijos</h3>
+        <ul style="list-style: none; padding: 0;">
+            {% for ingreso in ingresos_fijos %}
+                <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                    <a href="{% url 'successify:ingreso' ingreso.codigo %}" 
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                        <strong style="white-space: nowrap;">{{ ingreso.name }}</strong> 
+                        <span style="color: #38cd0f;">{{ ingreso.presupuesto }}€</span>        
+                    </a>
+                </li>
+            {% empty %}
+                <li>No hay ingresos fijos.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="columna-gastos-fijos">
+        <a href="{% url 'successify:gastos' %}"
+        style= "text-decoration: none; color: #333;"><h3>📉 Todos los gastos Fijos</h3></a>
+        <ul style="list-style: none; padding: 0;">
+            {% for gasto in gastos_fijos %}
+                <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                    <a href="{% url 'successify:gasto' gasto.codigo %}" 
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                        <strong style="white-space: nowrap;">{{ gasto.name }}</strong> 
+                        <span style="color: #eb3f3f;">{{ gasto.presupuesto }}€</span>       
+                    </a>
+                </li>
+            {% empty %}
+                <li>No hay gastos fijos.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="columna-gastos-esporadicos">
+        <a href="{% url 'successify:gastos' %}" 
+        style= "text-decoration: none; color: #333;"><h3>📌 Gastos Esporádicos</h3></a>
+        <ul style="list-style: none; padding: 0;">
+            {% for gasto in gastos_esporadicos %}
+                <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                    <a href="{% url 'successify:gasto' gasto.codigo %}"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                        
+                        <strong>{{ gasto.name }}</strong> 
+                        <span style="color: #eb3f3f;">{{ gasto.presupuesto }}€</span>
+                    </a>
+                </li>
+            {% empty %}
+                <li>No hay gastos esporádicos.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock content %}
+

@@ -1,0 +1,17 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+    <p>Categorías de gastos</p>
+
+    <ul>
+    {% for categoria in categorias %}
+        <li>{{ categoria }}</li>
+    {% empty %}
+        <li>Ninguna categoria ha sido añadida aún</li>
+    {% endfor %}
+    </ul>
+
+    <a href="{% url 'successify:gastos' %}">Consulta todos tus gastos</a>
+
+{% endblock content %}
+

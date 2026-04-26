@@ -1,0 +1,48 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+<div style="display: grid; grid-template-columns: max-content max-content; gap: 50px;">    
+    <div class="columna-fijos">
+        <h3>🗓️ Gastos Fijos</h3>
+        <ul style="list-style: none; padding: 0;">
+            {% for gasto in gastos_fijos %}
+                <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                    <a href="{% url 'successify:gasto' gasto.codigo %}" 
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+
+                        <strong style="white-space: nowrap;">{{ gasto.name }}</strong> 
+                        <span style="color: #eb3f3f;">{{ gasto.presupuesto }}€</span>
+        
+                    </a>
+                </li>
+            {% empty %}
+                <li>No hay gastos fijos.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="columna-esporadicos">
+        <h3>📌 Gastos Esporádicos</h3>
+        <ul style="list-style: none; padding: 0;">
+            {% for gasto in gastos_esporadicos %}
+                <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
+                    <a href="{% url 'successify:gasto' gasto.codigo %}"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
+                        
+                        <strong>{{ gasto.name }}</strong> 
+                        <span style="float: right; color: #eb3f3f;">{{ gasto.presupuesto }}€</span>
+                    </a>
+                </li>
+            {% empty %}
+                <li>No hay gastos esporádicos.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<a href="{% url 'successify:nuevo_gasto' %}">Añade un gasto nuevo</a>
+
+{% endblock content %}
+

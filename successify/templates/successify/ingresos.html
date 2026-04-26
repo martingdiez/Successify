@@ -1,0 +1,20 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+    <ul>
+        <p>Ingresos</p>
+        {% for ingreso in ingresos %}
+            <li>
+                <a href="{% url 'successify:ingreso' ingreso.codigo %}">
+                {{ ingreso.categoria }} - {{ ingreso.name }} - {{ ingreso.presupuesto }}</a>
+            </li>
+        
+            {% empty %}
+            <li>Ningún ingreso ha sido añadido aún</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'successify:nuevo_ingreso' %}">Añade un ingreso nuevo</a>
+
+{% endblock content %}
+

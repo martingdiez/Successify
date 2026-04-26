@@ -1,0 +1,58 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <p>Balance: {{ year }} - {{ month }}</p>
+    <ul>    
+        <li>Total ingresos: {{total_ingresos}}</li>
+        <li>Total gastos: {{total_gastos}}</li>
+        <li>Balance: {{balance_mes}}</li>
+    </ul>
+
+    <div>
+    <a href="?year={{ prev_month_year }}&month={{ prev_month }}">« Mes anterior</a>
+    |
+    <a href="?year={{ next_month_year }}&month={{ next_month }}">Mes siguiente »</a>
+    </div>
+
+    <div>
+    <a href="?year={{ prev_year }}&month={{ month }}">« Año anterior</a>
+    |
+    <a href="?year={{ next_year }}&month={{ month }}">Año siguiente »</a>
+    </div>
+
+    <p>Balance {{ year }}</p>
+    <canvas id="balanceChart" style="width:100%; max-width:800px; height:150px;"></canvas>
+
+<script>
+const labels = {{ context_labels|safe }};
+const balances = {{ context_balances|safe }};
+
+const ctx = document.getElementById('balanceChart').getContext('2d');
+
+const balanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Balance mensual',
+            data: balances,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock content %}
+

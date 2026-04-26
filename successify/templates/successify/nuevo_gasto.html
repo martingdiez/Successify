@@ -1,0 +1,15 @@
+{% extends "successify/base.html" %}
+
+{% block content %}
+
+    <p>Añade un gasto nuevo:</p>
+    <form action="{%url 'successify:nuevo_gasto' %}" method='post'>
+    {% csrf_token %}
+    {{form.as_div}}
+
+    <button name="submit">Agregar gasto</button>
+    
+    </form>
+    
+{% endblock content %}
+
