@@ -27,10 +27,10 @@ def index(request):
     """La página de inicio para Successus"""
     return render(request, 'successify/index.html')
 
-def mes(request, codigo):
+def mes(request, codigo, gasto):
     """Vista completa de toda la información de un mes"""
     
-    # 1. Buscamos el mes específico por su código (o ID)
+    # 1. Buscamos el mes específico por su código.
     mes_obj = get_object_or_404(Mes, codigo=codigo, owner=request.user)
     nombre_mes = MESES_ES.get(mes_obj.month,"random")
     
@@ -90,8 +90,6 @@ def gasto(request,codigo):
     # Traer todos los GastoMes de este gasto
     qs = GastoMes.objects.filter(gasto=gasto).order_by('mes__year', 'mes__month')
 
-
-
     try:
         year_focal = int(request.GET.get('year', date.today().year))
     except ValueError:
@@ -104,23 +102,20 @@ def gasto(request,codigo):
 
     for i in range(12):
         fecha_iterada = inicio + relativedelta(months=i)       
-        # Buscar (o asegurar que exista) el objeto Mes en la DB
-        # Esto es vital para que GastoMes tenga a donde apuntar
         mes_obj, _ = Mes.objects.get_or_create(
             owner=request.user, 
             year=fecha_iterada.year, 
             month=fecha_iterada.month
         )
         
-        # Buscar el GastoMes para este gasto en este mes
         # Usamos .first() para que no de error si no existe aún
         gasto_mes = GastoMes.objects.filter(gasto=gasto, mes=mes_obj).first()
         
-        nombre_mes_frontend = MESES_ES[fecha_iterada.month]
+        nombre_mes = MESES_ES[fecha_iterada.month]
 
         if gasto_mes:        
             meses_rango.append({
-                'nombre': nombre_mes_frontend, # Ene 2026
+                'nombre': nombre_mes, # Ene 2026
                 'mes_obj': mes_obj,
                 'gasto_mes': gasto_mes,
                 'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year
@@ -128,7 +123,7 @@ def gasto(request,codigo):
         
         else:
             meses_rango.append({ 
-            'nombre': nombre_mes_frontend, # Ene 2026
+            'nombre': nombre_mes, # Ene 2026
             'mes_obj': mes_obj,
             'gasto_mes': gasto_mes,
             'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year

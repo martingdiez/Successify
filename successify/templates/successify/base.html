@@ -61,18 +61,27 @@
 <!-- #Vista mes -->
 <script>
 function abrirMes(codigo) {
-    // 1. Buscamos si ya hay un panel abierto y lo eliminamos de inmediato
     const panelExistente = document.querySelector('.drawer');
+    
     if (panelExistente) {
-        panelExistente.remove();
+        // Leemos el código que guardamos en el atributo data-codigo
+        const codigoAbierto = panelExistente.getAttribute('data-codigo');
+
+        if (codigoAbierto === codigo) {
+            // SI ES EL MISMO: Ejecutamos la función de cerrar que ya tienes
+            cerrarPanel();
+            return; // IMPORTANTE: Detenemos la ejecución aquí (no sigue al fetch)
+        } else {
+            // SI ES OTRO: Lo borramos rápido para dejar espacio al nuevo
+            panelExistente.remove();
+        }
     }
 
-    // 2. Pedimos el nuevo panel usando el CÓDIGO
+    // Si llegamos aquí, es porque no había panel o era de otro mes
     fetch(`/mes/${codigo}/`)
         .then(response => response.text())
         .then(html => {
             document.body.insertAdjacentHTML('beforeend', html);
-            // Usamos un tiempo mínimo para que la animación de entrada funcione
             setTimeout(() => {
                 const nuevoPanel = document.querySelector('.drawer');
                 if (nuevoPanel) {
@@ -80,7 +89,7 @@ function abrirMes(codigo) {
                 }
             }, 10);
         });
-    }
+}
 
     function cerrarPanel() {
         const drawer = document.querySelector('.drawer');
