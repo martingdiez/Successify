@@ -16,6 +16,8 @@
 
 </p>
 
+<hr>
+
 {% if messages %}
     <div id="toast-container" style="position: fixed; top: 20px; left:50%; transform: translateX(-50%); z-index: 9999;">
         {% for message in messages %}
@@ -51,7 +53,7 @@
 {% block content %} {% endblock content %}
 
 {% if user.is_authenticated %}
-    <hr />
+    <hr>
     <form action=" {% url "users:logout" %}" method='post'>
         {% csrf_token %}
         <button name='submit'>Cerrar sesión</button>

@@ -13,11 +13,14 @@
         </form>
     </div>
 
-    <p>
-        <a href="{% url 'successify:eliminar_ingreso' codigo %}"
-            style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 15px; padding: 0; text-decoration: none; display: inline-block;">
-            🗑 Eliminar ingreso</a>
-    </p>
+    <form action="{% url "successify:eliminar_ingreso" codigo %}"
+        method="post"
+        onsubmit="return confirm('¿Borrar {{ingreso.name}}?')">
+        {% csrf_token %}
+        <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 15px; padding: 0; text-decoration: none; display: inline-block;">
+            🗑 Eliminar ingreso
+        </button>
+    </form>
     <p>&nbsp</p>
 
 
@@ -34,62 +37,85 @@
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
     {% for item in meses_rango %}
-        <div class="mes-card" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; {% if item.es_actual %}background-color: #e8f4fd; border-color: #2196F3;{% endif %}">
+        <div class="mes-card"
+            onclick="abrirMes('{{ item.mes_obj.codigo }}','{{ingreso.codigo }}')"
+            style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; cursor: pointer; 
+            {% if item.mes_obj.cerrado %}
+                background-color: #fff9c4; border-color: #fbc02d;            
+            {% elif item.es_actual %}
+                background-color: #e8f4fd; border-color: #2196F3;
+            {% endif %}">
             
-            <strong style="display: block; margin-bottom: 5px;">{{ item.nombre }}</strong>
+            {% if item.mes_obj.cerrado %}
+            {{ item.nombre }}🔒
 
-            {% if item.ingreso_mes %}
-                <div class="info-ingreso">
-                    <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post" style="display: flex; gap: 1px; margin-top: 5px;">
-                        {% csrf_token %}
-                        <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
-                        <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
-                        
-                        <input type="number" step="0.01" name="monto" value="{{ item.ingreso_mes.monto }}" 
-                            style="width: 70%; font-weight: bold; font-size: 11px; padding: 2px;">
-                        
-                        <button type="submit" title="Guardar" 
-                                style="background: #000; color: white; border: none; width: 30%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                            ✔
-                        </button>
-                    </form>
+            {% else %}
+            {{ item.nombre }}
 
-                    {% if item.ingreso_mes.monto != ingreso.presupuesto %}
-                            <p style="font-size: 11px; color: #064216; margin: 2px 0;">≠ Presupuesto</p>
-                    {% endif %}
-                    <form action="{% url 'successify:eliminar_ingresomes' item.ingreso_mes.codigo %}" 
-                          method="post" 
-                          onsubmit="return confirm('¿Borrar {{item.nombre}}?');">
-                        {% csrf_token %}
-                        <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 11px; padding: 0;">
-                            🗑 Eliminar
-                        </button>
-                    </form>
-                    
+            {% endif %}
+            {% if item.mes_obj.cerrado %}
+                 <div class="info-ingreso-cerrado" onclick="event.stopPropagation()">
+                    <p style="font-size: 14px; font-weight: bold; margin: 5px 0;">
+                        {{ item.ingreso_mes.monto|default:"0.00" }}€
+                    </p>
+                    <span style="font-size: 10px; color: #7f8c8d; font-style: italic;">
+                        Balance cerrado</span>
                 </div>
             {% else %}
-                <div class="sin-ingreso">
-                    <span style="color: gray; font-size: 12px; display: block; margin-bottom: 5px;">Sin registro</span>
+                {% if item.ingreso_mes %}
+                    <div class="info-ingreso" onclick="event.stopPropagation()">
+                        <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post" style="display: flex; gap: 1px; margin-top: 5px;">
+                            {% csrf_token %}
+                            <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
+                            <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
+                            
+                            <input type="number" step="0.01" name="monto" value="{{ item.ingreso_mes.monto }}" 
+                                style="width: 70%; font-weight: bold; font-size: 11px; padding: 2px;">
+                            
+                            <button type="submit" title="Guardar" 
+                                    style="background: #000; color: white; border: none; width: 30%;
+                                    cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                ✔
+                            </button>
+                        </form>
 
-                    <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
-                        <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
-                        <input type="hidden" name="monto" value="{{ ingreso.presupuesto }}">
-                        <button type="submit" style="background: #333; color: white; border: none; padding: 3px; border-radius: 3px; cursor: pointer; font-size: 10px; width: 100%;">
-                            Aplicar Presupuesto
-                        </button>
-                    </form>
+                        {% if item.ingreso_mes.monto != ingreso.presupuesto %}
+                                <p style="font-size: 11px; color: #064216; margin: 2px 0;">≠ Presupuesto</p>
+                        {% endif %}
 
-                    <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post" style="margin-top: 5px; display: flex;">
-                        {% csrf_token %}
-                        <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
-                        <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
-                        <input type="number" step="0.01" name="monto" placeholder="0.00" required 
-                        style="width: 70%; font-size: 11px;">
-                        <button type="submit" style="background: #000; color: white; border: none; width: 30%; cursor: pointer;">+</button>
-                    </form>
-                </div>
+                        <form action="{% url 'successify:eliminar_ingresomes' item.ingreso_mes.codigo %}" 
+                              method="post" 
+                              onsubmit="return confirm('¿Borrar {{item.nombre}}?');">
+                            {% csrf_token %}
+                            <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 11px; padding: 0;">
+                                🗑 Eliminar
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="sin-ingreso" onclick="event.stopPropagation()">
+                        <span style="color: gray; font-size: 12px; display: block; margin-bottom: 5px;">Sin registro</span>
+
+                        <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
+                            <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
+                            <input type="hidden" name="monto" value="{{ ingreso.presupuesto }}">
+                            <button type="submit" style="background: #333; color: white; border: none; padding: 3px; border-radius: 3px; cursor: pointer; font-size: 10px; width: 100%;">
+                                Aplicar Presupuesto
+                            </button>
+                        </form>
+
+                        <form action="{% url 'successify:nuevo_ingreso_mes' ingreso.codigo %}" method="post" style="margin-top: 5px; display: flex;">
+                            {% csrf_token %}
+                            <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
+                            <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
+                            <input type="number" step="0.01" name="monto" placeholder="0.00" required 
+                            style="width: 70%; font-size: 11px;">
+                            <button type="submit" style="background: #000; color: white; border: none; width: 30%; cursor: pointer;">+</button>
+                        </form>
+                    </div>
+                {% endif %}
             {% endif %}
 
         </div>

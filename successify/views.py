@@ -193,7 +193,6 @@ def nuevo_gasto_mes(request, codigo):
         return redirect(f"{reverse('successify:gasto', args=[gasto.codigo])}?year={year}")
 
 def eliminar_gastomes(request, codigo_gastomes):
-    # Buscamos por el owner del mes para seguridad
     gastomes = get_object_or_404(GastoMes, codigo=codigo_gastomes, mes__owner=request.user)
     
     # Datos para volver atrás
@@ -212,7 +211,6 @@ def eliminar_gastomes(request, codigo_gastomes):
         gastomes.delete()
         messages.success(request, "Registro eliminado correctamente.")
         return redirect(redirect_url)
-
 
 @login_required
 @transaction.atomic
@@ -235,7 +233,7 @@ def editar_gasto(request, codigo):
         'codigo':gasto.codigo,
         }
     
-    return render(request, 'successify/gasto.html', context)
+    return render(request,'successify/gasto.html', context)
 
 @login_required
 def eliminar_gasto(request, codigo):
@@ -253,7 +251,7 @@ def eliminar_gasto(request, codigo):
         GastoMes.objects.filter(
             gasto=gasto,
             mes__cerrado=False,
-            owner=request.user).delete()
+            ).delete()
 
         gasto.delete()
         return redirect('successify:gastos')
@@ -304,7 +302,6 @@ def ingreso(request, codigo):
             month=fecha_iterada.month,
         )
 
-        # Buscar el IngresoMes para este gasto en este mes
         # Usamos .first() para que no de error si no existe aún
         ingreso_mes = IngresoMes.objects.filter(ingreso=ingreso, mes=mes_obj).first()
         
@@ -375,6 +372,10 @@ def nuevo_ingreso_mes(request,codigo):
             month=int(month),
         )
 
+        if mes_obj.cerrado:
+            messages.error(request, f"El mes {mes_obj} está cerrado y no permite nuevos registros.")
+            return redirect(f"{reverse('successify:ingreso', args=[ingreso.codigo])}?year={year}")
+
         IngresoMes.objects.update_or_create(
             mes=mes_obj,
             ingreso=ingreso,
@@ -385,20 +386,24 @@ def nuevo_ingreso_mes(request,codigo):
 
 def eliminar_ingresomes(request,codigo_ingresomes):
     """Elimina un IngresoMes"""
-    ingresomes=get_object_or_404(IngresoMes,codigo=codigo_ingresomes, ingreso__owner=request.user)
-    codigo_ingreso = ingresomes.ingreso.codigo
-    año_del_ingresomes = ingresomes.mes.year
+    ingresomes=get_object_or_404(IngresoMes,codigo=codigo_ingresomes, mes__owner=request.user)
+
+    # Datos para volver atrás
+    year = ingresomes.mes.year
+    # Si el ingreso existe usamos su código, si no, volvemos al resumen
+    redirect_url = reverse('successify:resumen')
+
+    if ingresomes.ingreso:
+        redirect_url = f"{reverse('successify:ingreso', args=[ingresomes.ingreso.codigo])}?year={year}"
+
+    if ingresomes.mes.cerrado:
+        messages.error(request, "No se puede eliminar un registro de un mes cerrado.")
+        return redirect(redirect_url)
 
     if request.method == 'POST':
         ingresomes.delete()
-        return redirect(f"{reverse('successify:ingreso', args=[codigo_ingreso])}?year={año_del_ingresomes}")
-
-    context = {
-        'ingresomes':ingresomes,
-        'ingreso':ingresomes.ingreso
-        }
-
-    return render(request, 'successify/eliminar_ingresomes.html', context)
+        messages.success(request,"Registro eliminado correctamente.")
+        return redirect(redirect_url)
 
 @login_required
 @transaction.atomic
@@ -418,7 +423,7 @@ def editar_ingreso(request, codigo):
     context = {
         'ingreso':ingreso,
         'ingreso_form':ingreso_form,
-        'codigo':codigo,
+        'codigo':ingreso.codigo,
         }
     
     return render(request,'successify/ingreso.html', context)
@@ -432,20 +437,18 @@ def eliminar_ingreso(request, codigo):
         owner=request.user,
     )
 
+    redirect_url = reverse('successify:resumen')
+
     if request.method == 'POST':
+
+        IngresoMes.objects.filter(
+            ingreso=ingreso,
+            mes__cerrado=False,
+        ).delete()
+
         ingreso.delete()
         return redirect('successify:ingresos')
-    
-    return render(request, 'successify/eliminar_ingreso.html',{'ingreso':ingreso})
 
-def get_or_create_mes(user, year, month):
-    mes, created = Mes.objects.get_or_create(
-        owner=user,
-        year=year,
-        month=month
-    )
-    
-    return mes
 
 @login_required
 def balance(request):
@@ -546,14 +549,14 @@ def resumen(request):
     mes = Mes.objects.filter(codigo=codigo_mes).first()
 
     #Sumo todos los gastos dentro del mes en curso
-    gastos_mes = GastoMes.objects.filter(mes=mes)
+    gastos_mes = GastoMes.objects.filter(gasto__owner=request.user, mes=mes)
     total_gasto_mes = 0
 
     for gasto_mes in gastos_mes:
         total_gasto_mes += gasto_mes.monto
 
     #Sumo todos los ingresos dentro del mes en curso
-    ingresos_mes = IngresoMes.objects.filter(mes=mes)
+    ingresos_mes = IngresoMes.objects.filter(ingreso__owner=request.user, mes=mes)
     total_ingreso_mes = 0
 
     for ingreso_mes in ingresos_mes:
@@ -576,6 +579,15 @@ def resumen(request):
 
 
 #FUNCIONES
+
+def get_or_create_mes(user, year, month):
+    mes, created = Mes.objects.get_or_create(
+        owner=user,
+        year=year,
+        month=month
+    )
+    
+    return mes
 
 def cambiar_estado_mes(request, codigo):
     if request.method == 'POST':

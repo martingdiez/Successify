@@ -82,7 +82,6 @@ class GastoMes(models.Model):
     
     monto = models.DecimalField(max_digits=10, decimal_places=2)
 
-
     class Meta:
         unique_together = ("gasto", "mes")
     
@@ -145,8 +144,10 @@ class Ingreso(models.Model):
         return self.name
     
 class IngresoMes(models.Model):
-    ingreso = models.ForeignKey(Ingreso, on_delete=models.CASCADE)
+    ingreso = models.ForeignKey(Ingreso, on_delete=models.SET_NULL, null=True)
     mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
+
+    nombre = models.CharField(max_length=50, null=True, blank=True)
     codigo = models.CharField(max_length=20, unique=True, 
                               blank=True, editable=False)
 
@@ -156,6 +157,14 @@ class IngresoMes(models.Model):
         unique_together = ("ingreso", "mes")
 
     def save(self, *args, **kwargs):
+
+        if self.pk and self.mes.cerrado:
+            raise ValidationError(
+                "No se puede modificar un registro de un mes cerrado.")
+        
+        if self.ingreso:
+            self.nombre = self.ingreso.name
+        
         super().save(*args, **kwargs)
         #Genera codigo fecha/ingreso
         if not self.codigo:
