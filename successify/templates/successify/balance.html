@@ -1,58 +1,211 @@
 {% extends "successify/base.html" %}
 
 {% block content %}
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <p>Balance: {{ year }} - {{ month }}</p>
-    <ul>    
-        <li>Total ingresos: {{total_ingresos}}</li>
-        <li>Total gastos: {{total_gastos}}</li>
-        <li>Balance: {{balance_mes}}</li>
-    </ul>
-
-    <div>
-    <a href="?year={{ prev_month_year }}&month={{ prev_month }}">« Mes anterior</a>
-    |
-    <a href="?year={{ next_month_year }}&month={{ next_month }}">Mes siguiente »</a>
+<div style="padding: 20px; font-family: sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>Balance Anual {{ year }}</h2>
+        <div>
+            <a href="?year={{ prev_year }}&month={{ month }}" style="text-decoration: none; color: #3498db; font-weight: bold;">« {{ prev_year }}</a> | 
+            <a href="?year={{ next_year }}&month={{ month }}" style="text-decoration: none; color: #3498db; font-weight: bold;">{{ next_year }} »</a>
+        </div>
     </div>
 
-    <div>
-    <a href="?year={{ prev_year }}&month={{ month }}">« Año anterior</a>
-    |
-    <a href="?year={{ next_year }}&month={{ month }}">Año siguiente »</a>
-    </div>
+    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #eee; position: relative;">
+        
+        <div style="position: absolute; top: 15px; right: 20px; z-index: 10;">
+            <select id="viewSelector" style="padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; font-size: 0.9em;">
+                <optgroup label="Barras">
+                    <option value="mamushka">Barras Anidadas</option>
+                    <option value="simple">Barras Separadas</option>
+                </optgroup>
+                <optgroup label="Líneas">
+                    <option value="line-straight">Líneas Rectas</option>
+                    <option value="line-curved">Líneas Curvas</option>
+                </optgroup>
+            </select>
+        </div>
 
-    <p>Balance {{ year }}</p>
-    <canvas id="balanceChart" style="width:100%; max-width:800px; height:150px;"></canvas>
+        <div style="height: 400px; margin-top: 20px;">
+            <canvas id="balanceChart"></canvas>
+        </div>
+    </div>
+</div>
 
 <script>
-const labels = {{ context_labels|safe }};
-const balances = {{ context_balances|safe }};
+    const dataPack = {{ graph_data|safe }};
+    
+    let sum = 0;
+    const acumuladoData = dataPack.balances.map(val => sum += val);
 
-const ctx = document.getElementById('balanceChart').getContext('2d');
+    const maxIngreso = Math.max(...dataPack.ingresos);
+    const fixedGap = maxIngreso * 0.025; 
 
-const balanceChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Balance mensual',
-            data: balances,
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
+    const balanceFlotante = dataPack.balances.map((bal, i) => {
+        if (bal >= 0) {
+            const topeVerde = dataPack.ingresos[i];
+            const baseRoja = dataPack.gastos[i];
+            let inicio = baseRoja + fixedGap;
+            let fin = topeVerde - fixedGap;
+            if (inicio >= fin) {
+                inicio = baseRoja + (bal * 0.2);
+                fin = topeVerde - (bal * 0.2);
+            }
+            return [inicio, fin];
+        } else {
+            return [0, bal];
+        }
+    });
+
+    const ctx = document.getElementById('balanceChart').getContext('2d');
+
+    const balanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dataPack.labels,
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: dataPack.ingresos,
+                    backgroundColor: 'rgba(46, 204, 113, 0.12)',
+                    borderColor: '#2ecc71',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    barPercentage: 0.85,
+                    order: 4
+                },
+                {
+                    label: 'Gastos',
+                    data: dataPack.gastos,
+                    backgroundColor: '#e74c3c',
+                    borderRadius: 4,
+                    barPercentage: 0.6,
+                    order: 3
+                },
+                {
+                    label: 'Balance',
+                    data: balanceFlotante,
+                    backgroundColor: '#3498db',
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barPercentage: 0.6,
+                    order: 2
+                },
+                {
+                    label: 'Acumulado',
+                    data: acumuladoData,
+                    backgroundColor: '#f1c40f',
+                    borderRadius: 10,
+                    barPercentage: 0.25,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            // Restablecer link al panelmes al hacer clic
+        // ... dentro de las options del Chart ...
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const codigoMes = dataPack.codigos[index];
+                
+                // En lugar de redirigir, llamamos a la función de tu base.html
+                // Pasamos el codigoMes y un "0" para el codigo_movimiento
+                if (typeof abrirMes === "function") {
+                    abrirMes(codigoMes, "0");
+                } else {
+                    console.error("La función abrirMes no está disponible");
+                }
+            }
+        },
+            scales: {
+                x: { stacked: true },
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    // Estilos para el texto de Balance cerrado
+                    footerFont: {
+                        size: 10,
+                        style: 'italic',
+                        weight: 'normal'
+                    },
+                    footerColor: '#7f8c8d',
+                    itemSort: (a, b) => {
+                        const order = ['Ingresos', 'Gastos', 'Balance', 'Acumulado'];
+                        return order.indexOf(a.dataset.label) - order.indexOf(b.dataset.label);
+                    },
+                    callbacks: {
+                        // Añadir candado al nombre del mes si está cerrado
+                        title: function(items) {
+                            const index = items[0].dataIndex;
+                            const mes = items[0].label;
+                            return dataPack.cerrados[index] ? mes + ' 🔒' : mes;
+                        },
+                        label: function(context) {
+                            let val = context.raw;
+                            if (Array.isArray(val)) val = dataPack.balances[context.dataIndex];
+                            return context.dataset.label + ': ' + val.toLocaleString();
+                        },
+                        // Mostrar Balance cerrado solo en meses cerrados
+                        footer: function(items) {
+                            const index = items[0].dataIndex;
+                            return dataPack.cerrados[index] ? 'Balance cerrado' : '';
+                        }
+                    }
+                }
             }
         }
-    }
-});
+    });
+
+    document.getElementById('viewSelector').addEventListener('change', (e) => {
+        const view = e.target.value;
+        const ds = balanceChart.data.datasets;
+
+        if (view === 'mamushka') {
+            balanceChart.config.type = 'bar';
+            balanceChart.options.scales.x.stacked = true;
+            ds[0].type = 'bar';
+            ds[0].backgroundColor = 'rgba(46, 204, 113, 0.12)';
+            ds[0].barPercentage = 0.85;
+            ds[0].borderRadius = 6;
+            ds[1].type = 'bar';
+            ds[1].barPercentage = 0.6;
+            ds[1].borderRadius = 4;
+            ds[2].type = 'bar';
+            ds[2].data = balanceFlotante; 
+            ds[2].barPercentage = 0.6;
+            ds[2].borderRadius = 4;
+            ds[2].borderSkipped = false;
+            ds[3].type = 'bar';
+            ds[3].barPercentage = 0.25;
+            ds[3].borderRadius = 10;
+        } 
+        else {
+            balanceChart.options.scales.x.stacked = false;
+            ds[2].data = dataPack.balances;
+            if (view.includes('line')) {
+                balanceChart.config.type = 'line';
+                ds.forEach(d => { 
+                    d.type = 'line'; 
+                    d.tension = view === 'line-curved' ? 0.4 : 0; 
+                });
+            } else {
+                balanceChart.config.type = 'bar';
+                ds.forEach(d => { 
+                    d.type = 'bar'; 
+                    d.barPercentage = 0.8; 
+                    d.borderRadius = 4;
+                });
+                ds[0].backgroundColor = '#2ecc71';
+            }
+        }
+        balanceChart.update();
+    });
 </script>
 {% endblock content %}
-

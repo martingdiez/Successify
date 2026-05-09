@@ -27,35 +27,33 @@ def index(request):
     """La página de inicio para Successus"""
     return render(request, 'successify/index.html')
 
-def mes(request, codigo_mes, codigo_movimiento):
+def mes(request, codigo_mes, codigo_movimiento=None):
     """Vista completa de toda la información de un mes"""
     
-    # 1. Buscamos el mes específico por su código.
+    # Buscamos el mes específico por su código.
     mes_obj = get_object_or_404(Mes, codigo=codigo_mes, owner=request.user)
-    nombre_mes = MESES_ES.get(mes_obj.month,"random")
+    nombre_mes = MESES_ES.get(mes_obj.month, "random")
     
-    # 2. Buscamos los registros que pertenecen a ese mes
+    # Buscamos los registros que pertenecen a ese mes
     ingresos_mes = IngresoMes.objects.filter(mes=mes_obj)
     gastos_mes = GastoMes.objects.filter(mes=mes_obj)
     
-    # 3. Calculamos totales
+    # Calculamos totales
     total_ingresos = sum(i.monto for i in ingresos_mes)
     total_gastos = sum(g.monto for g in gastos_mes)
 
     context = {
         'mes': mes_obj,
-        'nombre_mes':nombre_mes,
+        'nombre_mes': nombre_mes,
         'gastos_mes': gastos_mes,
         'total_gastos': total_gastos,
         'ingresos_mes': ingresos_mes,
         'total_ingresos': total_ingresos,
         'balance': total_ingresos - total_gastos,
-        'codigo_movimiento': codigo_movimiento,
+        'codigo_movimiento': codigo_movimiento, # Será None si se entra desde el gráfico
     }
 
-    # Nota: El primer argumento de render es el nombre del ARCHIVO .html
     return render(request, 'successify/mes_panel.html', context)
-
 
 def categorias_de_gastos(request):
     """La página que muestra todas las categorías de gastos"""
@@ -452,83 +450,55 @@ def eliminar_ingreso(request, codigo):
 
 @login_required
 def balance(request):
-    """Calcula el balance mensual usando Mes, GastoMes e IngresoMes"""
     today = date.today()
-    year = request.GET.get("year")
-    month = request.GET.get("month")
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
 
-    try:
-        year = int(year)
-    except (TypeError, ValueError):
-        year = today.year
-
-    try:
-        month = int(month)
-        if month < 1 or month > 12:
-            month = today.month
-    except (TypeError, ValueError):
-        month = today.month
-
-    balances_anuales = []
+    data_nombres_mes = []
+    data_ingresos = []
+    data_gastos = []
+    data_balances = []
+    meses_cerrados = []
+    codigos_meses = []
 
     for m in range(1, 13):
-
         mes_obj = get_or_create_mes(request.user, year, m)
 
-        gastos_fijos = GastoMes.objects.filter(
-            mes=mes_obj,
-            gasto__categoria__es_fijo=True
+        # aggregate devuelve un diccionario {'monto__sum': valor}
+        total_gastos = GastoMes.objects.filter(
+            mes=mes_obj
         ).aggregate(Sum("monto"))["monto__sum"] or 0
 
-        gastos_esporadicos = GastoMes.objects.filter(
-            mes=mes_obj,
-            gasto__categoria__es_fijo=False
+        total_ingresos = IngresoMes.objects.filter(
+            mes=mes_obj
         ).aggregate(Sum("monto"))["monto__sum"] or 0
 
-        ingresos_fijos = IngresoMes.objects.filter(
-            mes=mes_obj,
-            ingreso__categoria__es_fijo=True
-        ).aggregate(Sum("monto"))["monto__sum"] or 0
+        # MESES_ES es tu diccionario de nombres de meses
+        data_nombres_mes.append(MESES_ES.get(m, f"Mes {m}"))
+        data_ingresos.append(float(total_ingresos))
+        data_gastos.append(float(total_gastos))
+        data_balances.append(float(total_ingresos - total_gastos))
+        meses_cerrados.append(mes_obj.cerrado)
+        codigos_meses.append(mes_obj.codigo)
 
-        ingresos_esporadicos = IngresoMes.objects.filter(
-            mes=mes_obj,
-            ingreso__categoria__es_fijo=False
-        ).aggregate(Sum("monto"))["monto__sum"] or 0
-
-        total_ingresos = ingresos_fijos + ingresos_esporadicos
-        total_gastos = gastos_fijos + gastos_esporadicos
-
-        balances_anuales.append({
-            "mes": m,
-            "ingresos": total_ingresos,
-            "gastos": total_gastos,
-            "balance": total_ingresos - total_gastos,
-        })
-
-    mes_actual_data = balances_anuales[month - 1]
-
-    # Navegación meses/años
-    prev_month, prev_year = (month-1, year) if month > 1 else (12, year-1)
-    next_month, next_year = (month+1, year) if month < 12 else (1, year+1)
-
-    labels = [f"Mes {item['mes']}" for item in balances_anuales]
-    balances = [float(item.get("balance", 0)) for item in balances_anuales]
+    # Navegación
+    prev_year = year - 1
+    next_year = year + 1
 
     context = {
         "year": year,
         "month": month,
-        "balances_anuales": balances_anuales,
-        "total_ingresos": mes_actual_data["ingresos"],
-        "total_gastos": mes_actual_data["gastos"],
-        "balance_mes": mes_actual_data["balance"],
-        "prev_month": prev_month,
-        "prev_month_year": prev_year,
-        "next_month": next_month,
-        "next_month_year": next_year,
-        "context_labels": json.dumps(labels),
-        "context_balances": json.dumps(balances),
+        "graph_data": json.dumps({
+            "labels": data_nombres_mes,
+            "ingresos": data_ingresos,
+            "gastos": data_gastos,
+            "balances": data_balances,
+            "cerrados": meses_cerrados,
+            "codigos": codigos_meses,
+        }),
+        "prev_year": prev_year,
+        "next_year": next_year,
     }
-
     return render(request, "successify/balance.html", context)
 
 def resumen(request):
