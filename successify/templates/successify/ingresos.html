@@ -6,7 +6,7 @@
         {% for ingreso in ingresos %}
             <li>
                 <a href="{% url 'successify:ingreso' ingreso.codigo %}">
-                {{ ingreso.categoria }} - {{ ingreso.name }} - {{ ingreso.presupuesto }}</a>
+                {{ ingreso.categoria }} - {{ ingreso.nombre }} - {{ ingreso.presupuesto }}</a>
             </li>
         
             {% empty %}

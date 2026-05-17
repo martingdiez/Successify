@@ -36,7 +36,7 @@
                 <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
                     <a href="{% url 'successify:ingreso' ingreso.codigo %}" 
                         style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
-                        <strong style="white-space: nowrap;">{{ ingreso.name }}</strong> 
+                        <strong style="white-space: nowrap;">{{ ingreso.nombre }}</strong> 
                         <span style="color: #38cd0f;">{{ ingreso.presupuesto }}€</span>        
                     </a>
                 </li>
@@ -54,7 +54,7 @@
                 <li style="margin-bottom: 8px; border: 1px solid #eee; border-radius: 5px; width: 100%;">
                     <a href="{% url 'successify:gasto' gasto.codigo %}" 
                         style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
-                        <strong style="white-space: nowrap;">{{ gasto.name }}</strong> 
+                        <strong style="white-space: nowrap;">{{ gasto.nombre }}</strong> 
                         <span style="color: #eb3f3f;">{{ gasto.presupuesto }}€</span>       
                     </a>
                 </li>
@@ -73,7 +73,7 @@
                     <a href="{% url 'successify:gasto' gasto.codigo %}"
                         style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; text-decoration: none; color: #333; gap: 20px;">
                         
-                        <strong>{{ gasto.name }}</strong> 
+                        <strong>{{ gasto.nombre }}</strong> 
                         <span style="color: #eb3f3f;">{{ gasto.presupuesto }}€</span>
                     </a>
                 </li>

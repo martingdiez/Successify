@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="seccion-edicion">
-    <h3>{{ingreso.name}}</h3>
+    <h3>{{ingreso.nombre}}</h3>
         <form action="{% url 'successify:editar_ingreso' ingreso.codigo %}" method="post">
             {% csrf_token %}
             {{ ingreso_form.as_p }}
@@ -15,7 +15,7 @@
 
     <form action="{% url "successify:eliminar_ingreso" codigo %}"
         method="post"
-        onsubmit="return confirm('¿Borrar {{ingreso.name}}?')">
+        onsubmit="return confirm('¿Borrar {{ingreso.nombre}}?')">
         {% csrf_token %}
         <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 15px; padding: 0; text-decoration: none; display: inline-block;">
             🗑 Eliminar ingreso

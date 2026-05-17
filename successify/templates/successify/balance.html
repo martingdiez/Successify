@@ -111,13 +111,10 @@
             if (elements.length > 0) {
                 const index = elements[0].index;
                 const codigoMes = dataPack.codigos[index];
-                
-                // En lugar de redirigir, llamamos a la función de tu base.html
-                // Pasamos el codigoMes y un "0" para el codigo_movimiento
+        
+                // Llamada limpia: Sin movimiento asociado
                 if (typeof abrirMes === "function") {
-                    abrirMes(codigoMes, "0");
-                } else {
-                    console.error("La función abrirMes no está disponible");
+                    abrirMes(codigoMes, null);
                 }
             }
         },

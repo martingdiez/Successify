@@ -67,7 +67,6 @@ function abrirMes(codigoMes, codigoGasto) {
     
     if (panelExistente) {
         const codigoAbierto = panelExistente.getAttribute('data-codigo');
-        // Usamos codigoMes que es el primer argumento
         if (codigoAbierto === codigoMes) {
             cerrarPanel();
             return; 
@@ -76,12 +75,21 @@ function abrirMes(codigoMes, codigoGasto) {
         }
     }
 
-    // IMPORTANTE: Ahora la URL debe enviar ambos códigos
-    // Tu servidor espera: /mes/CODIGO_MES/CODIGO_GASTO/
-    fetch(`/mes/${codigoMes}/${codigoGasto}/`)
+    // NUEVO: Ajustamos la URL unificada. Si el "codigoGasto" es un valor real (no "0" o nulo),
+    // se lo mandamos como Query string adjunto.
+    let url = `/panelmes/${codigoMes}/`;
+    if (codigoGasto && codigoGasto !== "0") {
+        url += `?movimiento=${codigoGasto}`;
+    }
+
+    fetch(url)
         .then(response => response.text())
         .then(html => {
             document.body.insertAdjacentHTML('beforeend', html);
+            // Creamos un contenedor Drawer si no venía en el fragmento HTML
+            const drawer = document.querySelector('.drawer');
+            if (drawer) { drawer.setAttribute('data-codigo', codigoMes); }
+            
             setTimeout(() => {
                 const nuevoPanel = document.querySelector('.drawer');
                 if (nuevoPanel) {
@@ -100,3 +108,10 @@ function abrirMes(codigoMes, codigoGasto) {
         }
     }
 </script>
+
+<style>
+    /* Estilos para activar la animación lateral del drawer */
+    .drawer.active {
+        right: 0 !important;
+    }
+</style>

@@ -1,77 +1,155 @@
-<div id="mes-drawer" class="drawer" data-codigo="{{ mes.codigo }}"
-    style="{% if mes.cerrado %} background-color: #fff9c4; border-color: #fbc02d;{% endif %}">
-    <div class="drawer-content">
-        <div class="drawer-header">
-            <div class="cal-icon">
-                <span class="cal-month">{{ nombre_mes|slice:":3" }}</span>
-                <span class="cal-day">{{ mes.year }}</span>
+<div id="mes-drawer" class="drawer" data-codigo="{{ mes.codigo }}" 
+     style="position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; transition: right 0.3s ease; z-index: 10000; overflow-y: auto; box-shadow: -5px 0 25px rgba(0,0,0,0.15); border-left: 1px solid #eee; {% if mes.cerrado %} background-color: #fff9c4; border-color: #fbc02d;{% else %} background: white;{% endif %}">
+    
+    <div class="drawer-content" style="padding: 24px; font-family: sans-serif; color: #2c3e50;">
+        
+        <div class="drawer-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; position: relative;">
+            <div class="cal-icon" style="border: 1px solid #333; border-radius: 4px; text-align: center; min-width: 50px; overflow: hidden; background: white;">
+                <span class="cal-month" style="background: #333; color: white; display: block; font-size: 10px; padding: 2px; text-transform: uppercase;">{{ nombre_mes|slice:":3" }}</span>
+                <span class="cal-day" style="font-size: 16px; font-weight: bold; padding: 5px; display: block; color: #333;">{{ mes.year }}</span>
             </div>
-            <h2>{{nombre_mes}}</h2>
-            <button onclick="cerrarPanel()" class="btn-close">&times;</button>
+            
+            <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+                {{ nombre_mes }}{% if mes.cerrado %}🔒{% endif %} 
+            </h2>
+            
+            <button onclick="cerrarPanel()" class="btn-close" style="background: none; border: none; font-size: 25px; cursor: pointer; margin-left: auto; color: #7f8c8d;">&times;</button>
         </div>
 
-        <hr>
+        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
 
-        <div class="drawer-body">
-            <div class="stat-item">
-                <span>Ingresos:</span>
-                <span class="monto-pos">{{ total_ingresos }}€</span>
-            </div>
-            <div class="stat-item">
-                <span>Gastos:</span>
-                <span class="monto-neg">{{ total_gastos }}€</span>
-            </div>
-            <div class="balance-box">
-                <strong>Balance: {{ balance }}€</strong>
-            </div>
+        <div class="finanzas-tree">
+            
+            <details class="rama-raiz" style="margin-bottom: 14px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;" open>
+                <summary style="padding: 12px; background: #61D994; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none;">
+                    <span style="color: #333;">Ingresos</span>
+                    <span>{{ total_ingresos|floatformat:2 }}€</span>
+                </summary>
+                
+                <div style="padding: 1px 12px 12px 20px; border-top: 1px solid #edf2f7;">
+                    {% for nodo in arbol_ingresos %}
+                    <details style="margin-top: 5px;" open>
+                        <summary style="font-weight: 600; color: #333; padding: 4px 0; cursor: pointer; display: flex; justify-content: space-between; list-style: none;">
+                            <span>{{ nodo.categoria|default:"Sin Categoría" }}</span>
+                            <span style="color: #333; font-weight: normal;">{{ nodo.subtotal|floatformat:2 }}€</span>
+                        </summary>
+                            
+                    <ul style="list-style: none; padding-left: 16px; margin: 4px 0 10px 0; border-left: 2px dashed #cbd5e1;">
+                        {% for item in nodo.items %}
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.ingreso.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">
+                                
+                                <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
+                                    {{ item.ingreso.nombre|default:"Ingreso" }}
+                                </span>
+                                
+                                <div style="display: flex; align-items: center; margin-left: auto;">
+                                    <span style="font-weight: 500; font-variant-numeric: tabular-nums; line-height: 24px;">
+                                        {{ item.monto|floatformat:2 }}€
+                                    </span>
+                                    
+                                    {% if not mes.cerrado %}
+                                        <form action="{% url 'successify:eliminar_ingresomes' item.codigo %}" 
+                                            method="post" 
+                                            onsubmit="return confirm('¿Borrar {{ item.nombre }}?');"
+                                            style="display: inline-flex; margin: 0; padding: 0; margin-left: 12px;">
+                                            {% csrf_token %}
+                                            <button type="submit" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; opacity: 0.6;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='0.6'; this.style.transform='scale(1)'">
+                                                🗑
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
 
-            <form action="{% url 'successify:cambiar_estado_mes' mes.codigo %}" method="post" style="margin-top: 30px;">
-                {% csrf_token %}
-                {% if mes.cerrado %}
-                    <button type="submit" class="btn-open">🔓 Abrir Mes</button>
-                {% else %}
-                    <button type="submit" class="btn-lock">🔒 Cerrar Mes</button>
-                {% endif %}
+                            </li>
+                        {% empty %}
+                            <li style="color: #b5b5b5; font-size: 13px; font-style: italic;">Sin movimientos</li>
+                        {% endfor %}
+                    </ul>
+                        </details>
+                    {% empty %}
+                        <p style="color: #94a3b8; font-size: 14px; margin: 10px 0 0 0;">No hay ingresos este mes.</p>
+                    {% endfor %}
+                </div>
+            </details>
+
+            <details class="rama-raiz" style="margin-bottom: 14px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;" open>
+                <summary style="padding: 12px; background: #DD4939; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none;">
+                    <span style="color: #333;">Gastos</span>
+                    <span>{{ total_gastos|floatformat:2 }}€</span>
+                </summary>
+                
+                <div style="padding: 1px 12px 12px 20px; border-top: 1px solid #edf2f7;">
+                    {% for nodo in arbol_gastos %}
+                        <details style="margin-top: 5px;" open>
+                            <summary style="font-weight: 600; color: #333; padding: 4px 0; cursor: pointer; display: flex; justify-content: space-between; list-style: none;">
+                                <span>{{ nodo.categoria.nombre|default:nodo.categoria|default:"Sin Categoría" }}</span>
+                                <span style="color: #333; font-weight: normal;">{{ nodo.subtotal|floatformat:2 }}€</span>
+                            </summary>
+                            
+                    <ul style="list-style: none; padding-left: 16px; margin: 4px 0 10px 0; border-left: 2px dashed #cbd5e1;">
+                        {% for item in nodo.items %}
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.gasto.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">           
+                                <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
+                                    {{ item.gasto.nombre|default:"Gasto" }}
+                                </span>
+                                
+                                <div style="display: flex; align-items: center; margin-left: auto;">
+                                    <span style="font-weight: 500; font-variant-numeric: tabular-nums; line-height: 24px;">
+                                        {{ item.monto|floatformat:2 }}€
+                                    </span>
+                                    
+                                    {% if not mes.cerrado %}
+                                        <form action="{% url 'successify:eliminar_gastomes' item.codigo %}" 
+                                            method="post" 
+                                            onsubmit="return confirm('¿Borrar {{ item.nombre }}?');"
+                                            style="display: inline-flex; margin: 0; padding: 0; margin-left: 12px;">
+                                            {% csrf_token %}
+                                            <button type="submit" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; opacity: 0.6;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='0.6'; this.style.transform='scale(1)'">
+                                                🗑
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+
+                            </li>
+                        {% empty %}
+                            <li style="color: #b5b5b5; font-size: 13px; font-style: italic;">Sin registros</li>
+                        {% endfor %}
+                    </ul>
+                        </details>
+                    {% empty %}
+                        <p style="color: #94a3b8; font-size: 14px; margin: 10px 0 0 0;">No hay gastos este mes.</p>
+                    {% endfor %}
+                </div>
+            </details>
+
+                <div style="background: #3396D8; border-radius: 8px; padding: 10px; margin-bottom: 2px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                        <span style="color: #333; font-weight: bold;">Balance Mensual:</span>
+                        <strong style="color: #333; font-size: 18px;">
+                            {{ balance|floatformat:2 }}€
+                        </strong>
+                    </div>
+                </div>
+                <form action="{% url 'successify:cambiar_estado_mes' mes.codigo %}" method="post" style="margin-top: 30px; margin-bottom: 20px;">
+                    {% csrf_token %}
+                    {% if mes.cerrado %}
+                        <button type="submit" style="width: 100%; background: white; color: #333; border: 1px solid #333; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            🔓 Abrir Mes
+                        </button>
+                    {% else %}
+                        <button type="submit" style="width: 100%; background: #333; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            🔒 Cerrar Mes
+                        </button>
+                    {% endif %}
             </form>
-        </div>
+        
+            </div>
     </div>
 </div>
 
 <style>
-    .drawer {
-        position: fixed;
-        right: -400px; /* Escondido por defecto */
-        top: 0;
-        width: 350px;
-        height: 100%;
-        background: white;
-        box-shadow: -2px 0 15px rgba(0,0,0,0.1);
-        transition: right 0.3s ease;
-        z-index: 10000;
-        border-left: 1px solid #eee;
-    }
-    
-    .drawer.active { right: 0; }
-
-    .drawer-content { padding: 25px; font-family: sans-serif; }
-
-    .drawer-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-
-    /* Estilo sutil de calendario */
-    .cal-icon {
-        border: 1px solid #333;
-        border-radius: 4px;
-        text-align: center;
-        min-width: 50px;
-        overflow: hidden;
-    }
-    .cal-month { background: #333; color: white; display: block; font-size: 10px; padding: 2px; }
-    .cal-day { font-size: 16px; font-weight: bold; padding: 5px; display: block; }
-
-    .stat-item { display: flex; justify-content: space-between; margin: 10px 0; font-size: 15px; }
-    .balance-box { background: #f9f9f9; padding: 15px; border-radius: 4px; text-align: center; margin-top: 20px; border: 1px solid #eee;}
-
-    .btn-lock { width: 100%; background: #333; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; }
-    .btn-open { width: 100%; background: white; color: #333; border: 1px solid #333; padding: 10px; cursor: pointer; border-radius: 4px; }
-    .btn-close { background: none; border: none; font-size: 25px; cursor: pointer; margin-left: auto; }
+    .finanzas-tree summary::-webkit-details-marker { display: none; }
+    .finanzas-tree summary { position: relative; }
+    .finanzas-tree details[open] > summary { border-bottom: 1px solid #edf2f7; }
 </style>

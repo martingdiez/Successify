@@ -34,7 +34,7 @@ class Mes(models.Model):
 # GASTOS
 class CategoríaGasto(models.Model):
     """Una categoría de egreso de dinero"""
-    name = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100)
     date_added = models.DateTimeField(auto_now_add=True)
     es_fijo = models.BooleanField(default=False)
 
@@ -43,13 +43,13 @@ class CategoríaGasto(models.Model):
 
     def __str__(self):
         """Devuelve una representación del modelo como cadena."""
-        return self.name
+        return self.nombre
 
 class Gasto(models.Model):
     categoria = models.ForeignKey(CategoríaGasto, on_delete=models.CASCADE)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    name = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=50)
     codigo = models.CharField(max_length=20, unique=True,
                             blank=True, editable=False)
 
@@ -66,16 +66,18 @@ class Gasto(models.Model):
             self.codigo = f"G{self.id}"
             super().save(update_fields=["codigo"])
 
-        self.gastomes_set.filter(mes__cerrado=False).update(nombre=self.name)
+        self.gastomes_set.filter(mes__cerrado=False).update(nombre=self.nombre)
 
     def __str__(self):
-        return self.name
+        return self.nombre
 
 class GastoMes(models.Model):
     gasto = models.ForeignKey(Gasto, on_delete=models.SET_NULL, null=True)
     mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
     
     nombre = models.CharField(max_length=50, null=True, blank=True)
+    categoria = models.CharField(max_length=50, null=True, blank=True)
+
     codigo = models.CharField(max_length=20, unique=True,
                                blank=True, editable=False)    
     
@@ -93,7 +95,8 @@ class GastoMes(models.Model):
                 "No se puede modificar un registro de un mes cerrado.")
 
         if self.gasto:
-            self.nombre = self.gasto.name
+            self.nombre = self.gasto.nombre
+            self.categoria = self.gasto.categoria
 
         super().save(*args, **kwargs)
 
@@ -109,7 +112,7 @@ class GastoMes(models.Model):
 
 class CategoriaIngreso(models.Model):
     """Una categoría de ingreso de dinero"""
-    name = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=100)
     date_added = models.DateTimeField(auto_now_add=True)
     es_fijo = models.BooleanField(default=False)
 
@@ -117,12 +120,12 @@ class CategoriaIngreso(models.Model):
         verbose_name_plural = 'Categorías de ingresos'
     
     def __str__(self):
-        return self.name
+        return self.nombre
     
 class Ingreso(models.Model):
     categoria = models.ForeignKey(CategoriaIngreso, on_delete=models.CASCADE)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=50)
     codigo = models.CharField(max_length=20, unique=True,
                                blank=True, editable=False)
 
@@ -141,13 +144,15 @@ class Ingreso(models.Model):
 
 
     def __str__(self):
-        return self.name
+        return self.nombre
     
 class IngresoMes(models.Model):
     ingreso = models.ForeignKey(Ingreso, on_delete=models.SET_NULL, null=True)
     mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
 
     nombre = models.CharField(max_length=50, null=True, blank=True)
+    categoria = models.CharField(max_length=50, null=True, blank=True)
+
     codigo = models.CharField(max_length=20, unique=True, 
                               blank=True, editable=False)
 
@@ -163,7 +168,8 @@ class IngresoMes(models.Model):
                 "No se puede modificar un registro de un mes cerrado.")
         
         if self.ingreso:
-            self.nombre = self.ingreso.name
+            self.nombre = self.ingreso.nombre
+            self.categoria = self.ingreso.categoria
         
         super().save(*args, **kwargs)
         #Genera codigo fecha/ingreso

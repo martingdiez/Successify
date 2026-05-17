@@ -3,7 +3,7 @@
 {% block content %}
 
     <div class="seccion-edicion">
-        <h3>{{gasto.name}}</h3>
+        <h3>{{gasto.nombre}}</h3>
         <form action="{% url 'successify:editar_gasto' gasto.codigo %}" method="post">
             {% csrf_token %}
             {{ gasto_form.as_p }}
@@ -15,7 +15,7 @@
 
     <form action="{% url "successify:eliminar_gasto" codigo%}" 
         method="post"
-        onsubmit="return confirm('¿Borrar {{gasto.name}}?')">
+        onsubmit="return confirm('¿Borrar {{gasto.nombre}}?')">
         {% csrf_token %}
         <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 15px; padding: 0; text-decoration: none; display: inline-block;">
             🗑 Eliminar gasto

@@ -13,6 +13,7 @@ from .forms import GastoForm, IngresoForm
 from django.http import Http404
 import json
 from django.forms import modelformset_factory
+from collections import defaultdict
 
 
 
@@ -27,30 +28,69 @@ def index(request):
     """La página de inicio para Successus"""
     return render(request, 'successify/index.html')
 
-def mes(request, codigo_mes, codigo_movimiento=None):
-    """Vista completa de toda la información de un mes"""
+def mes(request, codigo_mes):
+    """Vista completa e interactiva con estructura de árbol para un mes"""
     
-    # Buscamos el mes específico por su código.
+    # 1. Recuperamos el mes
     mes_obj = get_object_or_404(Mes, codigo=codigo_mes, owner=request.user)
-    nombre_mes = MESES_ES.get(mes_obj.month, "random")
+    nombre_mes = MESES_ES.get(mes_obj.month, "Misterioso")
     
-    # Buscamos los registros que pertenecen a ese mes
-    ingresos_mes = IngresoMes.objects.filter(mes=mes_obj)
-    gastos_mes = GastoMes.objects.filter(mes=mes_obj)
+    # 2. Capturamos el código del movimiento si viene por Query Parameter
+    codigo_movimiento = request.GET.get('movimiento', None)
     
-    # Calculamos totales
+    # 3. Traemos los registros haciendo el JOIN exacto hacia la categoría
+    ingresos_mes = IngresoMes.objects.filter(mes=mes_obj).select_related('ingreso__categoria')
+    gastos_mes = GastoMes.objects.filter(mes=mes_obj).select_related('gasto__categoria')
+    
+    # 4. Calculamos totales globales
     total_ingresos = sum(i.monto for i in ingresos_mes)
     total_gastos = sum(g.monto for g in gastos_mes)
+    
+    # 5. Agrupamos Gastos por Categoría de forma segura
+    gastos_por_categoria = defaultdict(list)
+    for gm in gastos_mes:
+        # Vamos directo al grano: GastoMes -> gasto -> categoria
+        cat = gm.gasto.categoria if gm.gasto else None
+        gastos_por_categoria[cat].append(gm)
+        
+    arbol_gastos = []
+    for categoria, lista_items in gastos_por_categoria.items():
+        lista_items_ordenada = sorted(lista_items, key=lambda item: item.monto, reverse=True)
+
+        subtotal = sum(item.monto for item in lista_items)
+        arbol_gastos.append({
+            'categoria': categoria,
+            'items': lista_items_ordenada,
+            'subtotal': subtotal
+        })
+        
+    # 6. Agrupamos Ingresos por Categoría de forma segura
+    ingresos_por_categoria = defaultdict(list)
+    for im in ingresos_mes:
+        # Vamos directo al grano: IngresoMes -> ingreso -> categoria
+        cat = im.ingreso.categoria if im.ingreso else None
+        ingresos_por_categoria[cat].append(im)
+        
+    arbol_ingresos = []
+    for categoria, lista_items in ingresos_por_categoria.items():
+        lista_items_ordenada = sorted(lista_items, key=lambda item: item.monto, reverse=True)
+
+        subtotal = sum(item.monto for item in lista_items)
+        arbol_ingresos.append({
+            'categoria': categoria,
+            'items': lista_items_ordenada,
+            'subtotal': subtotal
+        })
 
     context = {
         'mes': mes_obj,
         'nombre_mes': nombre_mes,
-        'gastos_mes': gastos_mes,
+        'arbol_gastos': arbol_gastos,
         'total_gastos': total_gastos,
-        'ingresos_mes': ingresos_mes,
+        'arbol_ingresos': arbol_ingresos,
         'total_ingresos': total_ingresos,
         'balance': total_ingresos - total_gastos,
-        'codigo_movimiento': codigo_movimiento, # Será None si se entra desde el gráfico
+        'codigo_movimiento': codigo_movimiento,
     }
 
     return render(request, 'successify/mes_panel.html', context)
@@ -68,10 +108,10 @@ def gastos(request):
     today = date.today()
     
     gastos_fijos = Gasto.objects.filter(
-        owner=request.user,categoria__name='Gastos Fijos').order_by('-presupuesto')
+        owner=request.user,categoria__nombre='Gastos Fijos').order_by('-presupuesto')
     
     gastos_esporadicos = Gasto.objects.filter(
-        owner=request.user, categoria__name='Gastos Esporádicos').order_by('-presupuesto')
+        owner=request.user, categoria__nombre='Gastos Esporádicos').order_by('-presupuesto')
     
     context = {'gastos_fijos':gastos_fijos,
                'gastos_esporadicos':gastos_esporadicos,
@@ -503,10 +543,10 @@ def balance(request):
 
 def resumen(request):
     """Lista todos los ingresos, gastos"""
-    gastos_fijos = Gasto.objects.filter(owner=request.user, categoria__name = 'Gastos Fijos').order_by('-presupuesto')
-    gastos_esporadicos = Gasto.objects.filter(owner=request.user, categoria__name = 'Gastos Esporádicos').order_by('-presupuesto') 
-    ingresos_fijos = Ingreso.objects.filter(owner=request.user, categoria__name = 'Ingresos Fijos').order_by('-presupuesto')
-    ingresos_esporadicos = Ingreso.objects.filter(owner=request.user, categoria__name = 'Ingresos Esporadicos').order_by('-presupuesto')
+    gastos_fijos = Gasto.objects.filter(owner=request.user, categoria__nombre = 'Gastos Fijos').order_by('-presupuesto')
+    gastos_esporadicos = Gasto.objects.filter(owner=request.user, categoria__nombre = 'Gastos Esporádicos').order_by('-presupuesto') 
+    ingresos_fijos = Ingreso.objects.filter(owner=request.user, categoria__nombre = 'Ingresos Fijos').order_by('-presupuesto')
+    ingresos_esporadicos = Ingreso.objects.filter(owner=request.user, categoria__nombre = 'Ingresos Esporadicos').order_by('-presupuesto')
 
 
 
