@@ -66,7 +66,7 @@ class Gasto(models.Model):
             self.codigo = f"G{self.id}"
             super().save(update_fields=["codigo"])
 
-        self.gastomes_set.filter(mes__cerrado=False).update(nombre=self.nombre)
+        self.gastomes_set.filter(mes__cerrado=False).update(nombre=self.nombre, categoria=self.categoria.nombre)
 
     def __str__(self):
         return self.nombre
@@ -96,7 +96,7 @@ class GastoMes(models.Model):
 
         if self.gasto:
             self.nombre = self.gasto.nombre
-            self.categoria = self.gasto.categoria
+            self.categoria = self.gasto.categoria.nombre
 
         super().save(*args, **kwargs)
 

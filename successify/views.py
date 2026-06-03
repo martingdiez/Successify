@@ -50,7 +50,7 @@ def mes(request, codigo_mes):
     gastos_por_categoria = defaultdict(list)
     for gm in gastos_mes:
         # Vamos directo al grano: GastoMes -> gasto -> categoria
-        cat = gm.gasto.categoria if gm.gasto else None
+        cat = gm.categoria
         gastos_por_categoria[cat].append(gm)
         
     arbol_gastos = []
@@ -68,7 +68,7 @@ def mes(request, codigo_mes):
     ingresos_por_categoria = defaultdict(list)
     for im in ingresos_mes:
         # Vamos directo al grano: IngresoMes -> ingreso -> categoria
-        cat = im.ingreso.categoria if im.ingreso else None
+        cat = im.categoria
         ingresos_por_categoria[cat].append(im)
         
     arbol_ingresos = []

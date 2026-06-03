@@ -39,7 +39,7 @@
                             <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.ingreso.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">
                                 
                                 <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
-                                    {{ item.ingreso.nombre|default:"Ingreso" }}
+                                    {{ item.nombre|default:"Ingreso" }}
                                 </span>
                                 
                                 <div style="display: flex; align-items: center; margin-left: auto;">
@@ -82,7 +82,7 @@
                     {% for nodo in arbol_gastos %}
                         <details style="margin-top: 5px;" open>
                             <summary style="font-weight: 600; color: #333; padding: 4px 0; cursor: pointer; display: flex; justify-content: space-between; list-style: none;">
-                                <span>{{ nodo.categoria.nombre|default:nodo.categoria|default:"Sin Categoría" }}</span>
+                                <span>{{ nodo.categoria|default:"Sin Categayría" }}</span>
                                 <span style="color: #333; font-weight: normal;">{{ nodo.subtotal|floatformat:2 }}€</span>
                             </summary>
                             
@@ -90,7 +90,7 @@
                         {% for item in nodo.items %}
                             <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.gasto.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">           
                                 <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
-                                    {{ item.gasto.nombre|default:"Gasto" }}
+                                    {{ item.nombre|default:"Gasto Eliminado" }}
                                 </span>
                                 
                                 <div style="display: flex; align-items: center; margin-left: auto;">
