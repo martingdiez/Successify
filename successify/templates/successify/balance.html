@@ -6,9 +6,10 @@
 <div style="padding: 20px; font-family: sans-serif;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h2>Balance Anual {{ year }}</h2>
-        <div>
-            <a href="?year={{ prev_year }}&month={{ month }}" style="text-decoration: none; color: #3498db; font-weight: bold;">« {{ prev_year }}</a> | 
-            <a href="?year={{ next_year }}&month={{ month }}" style="text-decoration: none; color: #3498db; font-weight: bold;">{{ next_year }} »</a>
+        <div style="font-size: 22px;">
+            <a href="?year={{ prev_year }}&month={{ month }}" style="text-decoration: none; color: #000000; font-weight: bold;">« {{ prev_year }}</a> 
+                <span style="color: #000000; margin: 0 6px;">|</span> 
+            <a href="?year={{ next_year }}&month={{ month }}" style="text-decoration: none; color: #000000; font-weight: bold;">{{ next_year }} »</a>
         </div>
     </div>
 

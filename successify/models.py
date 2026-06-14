@@ -169,7 +169,7 @@ class IngresoMes(models.Model):
         
         if self.ingreso:
             self.nombre = self.ingreso.nombre
-            self.categoria = self.ingreso.categoria
+            self.categoria = self.ingreso.categoria.nombre
         
         super().save(*args, **kwargs)
         #Genera codigo fecha/ingreso

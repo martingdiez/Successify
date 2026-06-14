@@ -30,13 +30,13 @@
                     {% for nodo in arbol_ingresos %}
                     <details style="margin-top: 5px;" open>
                         <summary style="font-weight: 600; color: #333; padding: 4px 0; cursor: pointer; display: flex; justify-content: space-between; list-style: none;">
-                            <span>{{ nodo.categoria|default:"Sin Categoría" }}</span>
+                            <span>{{ nodo.categoria|default:"Sin Categayría" }}</span>
                             <span style="color: #333; font-weight: normal;">{{ nodo.subtotal|floatformat:2 }}€</span>
                         </summary>
                             
                     <ul style="list-style: none; padding-left: 16px; margin: 4px 0 10px 0; border-left: 2px dashed #cbd5e1;">
                         {% for item in nodo.items %}
-                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.ingreso.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.ingreso.codigo == codigo_movimiento %}background: #cff1dd; font-weight: bold;{% endif %}">
                                 
                                 <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
                                     {{ item.nombre|default:"Ingreso" }}
@@ -88,7 +88,7 @@
                             
                     <ul style="list-style: none; padding-left: 16px; margin: 4px 0 10px 0; border-left: 2px dashed #cbd5e1;">
                         {% for item in nodo.items %}
-                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.gasto.codigo == codigo_movimiento %}background: #fff9db; font-weight: bold;{% endif %}">           
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 14px; color: #555; {% if item.codigo == codigo_movimiento or item.gasto.codigo == codigo_movimiento %}background: #f0c5c0; font-weight: bold;{% endif %}">           
                                 <span style="display: flex; align-items: center; gap: 6px; padding-right: 10px;">
                                     {{ item.nombre|default:"Gasto Eliminado" }}
                                 </span>

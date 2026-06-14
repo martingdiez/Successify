@@ -134,10 +134,10 @@ def gasto(request,codigo):
     except ValueError:
         year_focal = date.today().year
 
-    fecha_central = date(year_focal, date.today().month, 1)
 
     meses_rango = []
-    inicio = fecha_central - relativedelta(months=3)
+    inicio = date(year_focal, 1, 1)
+
 
     for i in range(12):
         fecha_iterada = inicio + relativedelta(months=i)       
@@ -168,14 +168,17 @@ def gasto(request,codigo):
             'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year
             })
 
+    # Navegación
+    prev_year = year_focal - 1
+    next_year = year_focal + 1
     
     context={'gasto':gasto,
             'gasto_form':gasto_form,
             'codigo':gasto.codigo,
             'meses_rango':meses_rango,
             'year_actual': year_focal,
-            'year_prev': year_focal - 1,
-            'year_next': year_focal + 1,    
+            'prev_year': prev_year,
+            'next_year': next_year,    
     }
 
     return render(request, 'successify/gasto.html', context)
@@ -321,14 +324,13 @@ def ingreso(request, codigo):
     ingreso_form = IngresoForm(instance=ingreso)
 
     try:
-        yearl_focal = int(request.GET.get('year',date.today().year))
+        year_focal = int(request.GET.get('year',date.today().year))
     except ValueError:
-        yearl_focal = date.today().year
+        year_focal = date.today().year
 
-    fecha_central = date(yearl_focal,date.today().month, 1)
 
     meses_rango = []
-    inicio = fecha_central - relativedelta(months=3)
+    inicio = date(year_focal, 1, 1)
 
     for i in range(12):
         fecha_iterada = inicio + relativedelta(months=i)
@@ -360,14 +362,18 @@ def ingreso(request, codigo):
                 'ingreso_mes':ingreso_mes,
                 'es_actual' : fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year,
                 })
-            
+
+    # Navegación
+    prev_year = year_focal - 1
+    next_year = year_focal + 1
+
     context={'ingreso':ingreso,
              'ingreso_form':ingreso_form,
              'codigo':ingreso.codigo,
              'meses_rango':meses_rango,
-             'year_actual':yearl_focal,
-             'year_prev':yearl_focal -1,
-             'year_next':yearl_focal +1,
+             'year_actual':year_focal,
+             'prev_year':prev_year,
+             'next_year':next_year,
     }
 
     return render(request, 'successify/ingreso.html', context)

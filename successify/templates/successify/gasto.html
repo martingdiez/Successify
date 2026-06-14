@@ -22,16 +22,16 @@
         </button>
     </form>
 
-    <p>&nbsp</p>
 
 
-
-    <div class="navegacion-año">
-    <a href="?year={{ year_prev }}">« Año {{ year_prev }}</a>
-    <span style="font-weight: bold; font-size: 20px; margin: 0 20px;">{{ year_actual }}</span>
-    <a href="?year={{ year_next }}">Año {{ year_next }} »</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2> Presupuesto Anual | {{ year_actual }}</h2>
+    <div style="font-size: 22px;">
+        <a href="?year={{ prev_year }}&month={{ month }}" style="text-decoration: none; color: #000000; font-weight: bold;">« {{ prev_year }}</a> 
+            <span style="color: #000000; margin: 0 6px;">|</span> 
+        <a href="?year={{ next_year }}&month={{ month }}" style="text-decoration: none; color: #000000; font-weight: bold;">{{ next_year }} »</a>
+    </div>
 </div>
-
 <hr>
 
 <!--LISTA DE GASTOMESES-->
@@ -79,10 +79,6 @@
                                 ✔
                             </button>
                         </form>
-
-                        {% if item.gasto_mes.monto != gasto.presupuesto %}
-                                <p style="font-size: 11px; color: #064216; margin: 2px 0;">≠ Presupuesto</p>
-                        {% endif %}
 
                         <form action="{% url 'successify:eliminar_gastomes' item.gasto_mes.codigo %}" 
                               method="post" 
