@@ -38,7 +38,6 @@
     </div>
 
     <script>
-        // Desvanecer y eliminar la notificación después de 3 segundos
         setTimeout(function() {
             const container = document.getElementById('toast-container');
             if (container) {
@@ -60,7 +59,6 @@
     </form>
 {% endif %}
 
-<!-- #Vista mes -->
 <script>
 function abrirMes(codigoMes, codigoGasto) {
     const panelExistente = document.querySelector('.drawer');
@@ -75,8 +73,6 @@ function abrirMes(codigoMes, codigoGasto) {
         }
     }
 
-    // NUEVO: Ajustamos la URL unificada. Si el "codigoGasto" es un valor real (no "0" o nulo),
-    // se lo mandamos como Query string adjunto.
     let url = `/panelmes/${codigoMes}/`;
     if (codigoGasto && codigoGasto !== "0") {
         url += `?movimiento=${codigoGasto}`;
@@ -86,7 +82,6 @@ function abrirMes(codigoMes, codigoGasto) {
         .then(response => response.text())
         .then(html => {
             document.body.insertAdjacentHTML('beforeend', html);
-            // Creamos un contenedor Drawer si no venía en el fragmento HTML
             const drawer = document.querySelector('.drawer');
             if (drawer) { drawer.setAttribute('data-codigo', codigoMes); }
             
@@ -99,19 +94,167 @@ function abrirMes(codigoMes, codigoGasto) {
         });
 }
 
-    function cerrarPanel() {
-        const drawer = document.querySelector('.drawer');
-        if (drawer) {
-            drawer.classList.remove('active');
-            // Lo borramos del mapa tras la animación (300ms es la duración del transition CSS)
-            setTimeout(() => drawer.remove(), 300); 
-        }
+function cerrarPanel() {
+    const drawer = document.querySelector('.drawer');
+    if (drawer) {
+        drawer.classList.remove('active');
+        setTimeout(() => drawer.remove(), 300); 
     }
+}
+
+function mostrarFormularioNuevo(gastoMesId) {
+    document.getElementById('nuevo-sub-form-' + gastoMesId).style.display = 'flex';
+    document.getElementById('btn-add-' + gastoMesId).style.display = 'none';
+}
 </script>
 
 <style>
-    /* Estilos para activar la animación lateral del drawer */
-    .drawer.active {
-        right: 0 !important;
-    }
+.drawer.active {
+    right: 0 !important;
+}
+
+/* 1. OPTIMIZACIÓN DEL ESPACIO DE LA TARJETA */
+.mes-card {
+    padding: 8px 4px !important; /* Reducimos el padding lateral para ganar valiosos píxeles */
+}
+
+/* 2. RESET DE FORMULARIOS */
+.subgastos-container form {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex; 
+    min-width: 0; /* Permite que los formularios se encojan correctamente */
+}
+
+.subgastos-container *, 
+.subgastos-container *::before, 
+.subgastos-container *::after {
+    box-sizing: border-box;
+}
+
+/* Contenedor principal de la lista de subgastos */
+.subgastos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1px; /* ◄ MODIFICA AQUÍ: Ajusta la separación vertical entre filas (0px, 1px, 2px...) */
+    margin-top: 5px;
+    width: 100%;
+}
+
+/* Fila contenedora (Une el bloque de edición con la papelera) */
+.subgasto-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1px;
+}
+
+/* Formulario de actualización */
+.subgasto-update-form {
+    display: flex;
+    align-items: center;
+    flex: 1; /* Ocupe el máximo espacio posible */
+    min-width: 0;
+    gap: 1px;
+}
+
+/* INPUT DE TEXTO (Nombre): Ahora es 100% dinámico */
+.input-subgasto-nombre {
+    flex: 1; /* Se estira o encoge automáticamente según el tamaño de la tarjeta */
+    min-width: 0; /* Clave para que no empuje a los demás elementos fuera de la pantalla */
+    height: 18px !important; /* ◄ MODIFICA AQUÍ: Altura del campo de texto */
+    font-size: 9px !important;
+    padding: 0 3px !important;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
+
+/* INPUT DE NÚMERO (Monto): Tamaño fijo ideal para cifras cortas */
+.input-subgasto-monto {
+    width: 32px !important; /* Ancho fijo óptimo para que quepan montos como "42.00" sin romperse */
+    flex-shrink: 0; /* Impide que el navegador lo colapse */
+    height: 18px !important; /* ◄ MODIFICA AQUÍ: Altura del campo numérico */
+    font-size: 9px !important;
+    padding: 0 1px !important;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    text-align: right;
+}
+
+/* Eliminar flechas en Chrome, Safari, Edge y Opera */
+.input-subgasto-monto::-webkit-outer-spin-button,
+.input-subgasto-monto::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/* Eliminar flechas en Firefox */
+.input-subgasto-monto {
+    -moz-appearance: textfield !important;
+}
+
+/* Botón Negro de Guardar (✓) */
+.btn-subgasto-check {
+    width: 14px !important;
+    height: 18px !important;
+    flex-shrink: 0;
+    background: #000;
+    color: white;
+    border: none;
+    font-size: 9px !important;
+    padding: 0 !important;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Formulario e icono de eliminación (🗑) */
+.subgasto-delete-form {
+    flex-shrink: 0;
+    width: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-subgasto-delete {
+    background: none;
+    border: none;
+    color: #d9534f;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+    width: 100%;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Formulario fantasma de creación (Mismo comportamiento elástico) */
+.subgasto-ghost-form {
+    align-items: center;
+    width: 100%;
+    gap: 1px;
+}
+
+/* Botón "+" de agregar nuevo registro */
+.btn-subgasto-agregar {
+    background: #000;
+    color: white;
+    border: none;
+    padding: 0;
+    font-weight: bold;
+    font-size: 11px;
+    cursor: pointer;
+    width: 40%;
+    border-radius: 2px;
+    margin: 2px auto 0 auto; 
+    display: block;
+    height: 15px;
+    line-height: 15px;
+}
+
 </style>

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.urls import reverse
-from .models import CategoríaGasto, Gasto, CategoriaIngreso, Ingreso, Mes, GastoMes, IngresoMes
+from .models import CategoríaGasto, Gasto, CategoriaIngreso, Ingreso, Mes, GastoMes, IngresoMes, SubGastoMes
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -12,7 +12,7 @@ from django.db import transaction
 from .forms import GastoForm, IngresoForm
 from django.http import Http404
 import json
-from django.forms import modelformset_factory
+from django.forms import ValidationError, modelformset_factory
 from collections import defaultdict
 
 
@@ -152,12 +152,18 @@ def gasto(request,codigo):
         
         nombre_mes = MESES_ES[fecha_iterada.month]
 
+        subgastos = []
+        if gasto_mes:
+            # Traemos todos los subgastos asociados a este mes
+            subgastos = gasto_mes.subgastos.all().order_by('id')
+
         if gasto_mes:        
             meses_rango.append({
                 'nombre': nombre_mes, # Ene 2026
                 'mes_obj': mes_obj,
                 'gasto_mes': gasto_mes,
-                'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year
+                'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year,
+                'subgastos': subgastos
             })
         
         else:
@@ -165,7 +171,8 @@ def gasto(request,codigo):
             'nombre': nombre_mes, # Ene 2026
             'mes_obj': mes_obj,
             'gasto_mes': gasto_mes,
-            'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year
+            'es_actual': fecha_iterada.month == date.today().month and fecha_iterada.year == date.today().year,
+            'subgastos': subgastos
             })
 
     # Navegación
@@ -253,6 +260,21 @@ def eliminar_gastomes(request, codigo_gastomes):
         messages.success(request, "Registro eliminado correctamente.")
         return redirect(redirect_url)
 
+@login_required
+def eliminar_subgasto(request, subgasto_id):
+    """Elimina directamente un subgasto desde su botón de basurero rojo"""
+    if request.method == "POST":
+        subgasto = get_object_or_404(SubGastoMes, id=subgasto_id, gasto_mes__gasto__owner=request.user)
+        
+        # Validación de seguridad heredada
+        if subgasto.gasto_mes.mes.cerrado:
+            raise ValidationError("No se puede eliminar un subregistro de un mes cerrado.")
+        
+        codigo_gasto = subgasto.gasto_mes.gasto.codigo
+        subgasto.delete() # Al borrarse, el método delete() que creamos ayer recalculará el total del padre automáticamente
+        
+        return redirect('successify:gasto', codigo=codigo_gasto)
+    
 @login_required
 @transaction.atomic
 def editar_gasto(request, codigo):
@@ -612,3 +634,46 @@ def cambiar_estado_mes(request, codigo):
         mes_obj.save()
         messages.success(request, f"Mes {'cerrado' if mes_obj.cerrado else 'abierto'} correctamente.")
     return redirect(request.META.get('HTTP_REFERER', 'successify:resumen'))
+
+@login_required
+def crear_subgasto_mes(request, gastomes_id):
+    """Procesa el envío del formulario cuando el usuario decide guardar un subgasto nuevo"""
+    if request.method == "POST":
+        # Buscamos el GastoMes padre asegurando que pertenezca al usuario (a través del gasto)
+        gasto_mes = get_object_or_404(GastoMes, id=gastomes_id, gasto__owner=request.user)
+        
+        nombre = request.POST.get('nombre', 'Sin registro').strip() or 'Sin registro'
+        monto = request.POST.get('monto', '0.00')
+        
+        # El backend se encarga de validar el límite de 3 gracias al método save() que modificamos antes
+        try:
+            SubGastoMes.objects.create(
+                gasto_mes=gasto_mes,
+                nombre=nombre,
+                monto=monto
+            )
+        except ValidationError:
+            # Aquí podrías manejar un mensaje de error si excede los 3
+            pass
+            
+        return redirect('successify:gasto', codigo=gasto_mes.gasto.codigo)
+
+@login_required
+def actualizar_subgasto(request, subgasto_id):
+    """Actualiza o elimina (si borran el nombre/monto) un subgasto existente"""
+    if request.method == "POST":
+        subgasto = get_object_or_404(SubGastoMes, id=subgasto_id, gasto_mes__gasto__owner=request.user)
+        
+        nombre = request.POST.get('nombre', '').strip()
+        monto = request.POST.get('monto', '0.00')
+        
+        # Si el usuario vacía el nombre o el monto, o si deseas un botón de eliminar, 
+        # podemos interpretar un nombre vacío como una orden de eliminación
+        if not nombre:
+            subgasto.delete()
+        else:
+            subgasto.nombre = nombre
+            subgasto.monto = monto
+            subgasto.save()
+            
+        return redirect('successify:gasto', codigo=subgasto.gasto_mes.gasto.codigo)

@@ -105,9 +105,55 @@ class GastoMes(models.Model):
             self.codigo = f"{self.mes.codigo}{self.gasto.codigo}"
             super().save(update_fields=["codigo"])
 
+    def actualizar_monto_por_subgastos(self):
+        """
+        Si tiene subgastos, suma todos sus montos y actualiza el campo 'monto'.
+        Si se eliminan todos los subgastos, mantiene su monto actual o pasa a 0.
+        """
+        # Obtenemos todos los subgastos relacionados usando el 'related_name'
+        subgastos_qs = self.subgastos.all()
+        
+        if subgastos_qs.exists():
+            # Sumamos todos los montos de sus hijos
+            total = sum(subgasto.monto for subgasto in subgastos_qs)
+            self.monto = total
+            # Guardamos únicamente el campo monto para no disparar validaciones infinitas
+            super().save(update_fields=['monto'])
+
     def __str__(self):
         return f"{self.codigo}: {self.monto}"
     
+class SubGastoMes(models.Model):
+    gasto_mes = models.ForeignKey(GastoMes, on_delete=models.CASCADE, related_name='subgastos')
+    nombre = models.CharField(max_length=100, default="Sin registro")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def save(self, *args, **kwargs):
+        # Validación de mes cerrado heredada del padre
+        if self.gasto_mes.mes.cerrado:
+            raise ValidationError("No se puede modificar un subregistro de un mes cerrado.")
+        
+        # Forzar el límite máximo de 3 subgastos en el backend al crear uno nuevo
+        if not self.pk and self.gasto_mes.subgastos.count() >= 3:
+            raise ValidationError("Un gasto mensual no puede tener más de 3 subregistros.")
+        
+        super().save(*args, **kwargs)
+        # Una vez guardado el subgasto, actualizamos el monto del GastoMes padre
+        self.gasto_mes.actualizar_monto_por_subgastos()
+
+    def delete(self, *args, **kwargs):
+        if self.gasto_mes.mes.cerrado:
+            raise ValidationError("No se puede eliminar un subregistro de un mes cerrado.")
+        
+        gasto_mes_padre = self.gasto_mes
+        super().delete(*args, **kwargs)
+        # Al eliminar, también recalculamos el monto del padre
+        gasto_mes_padre.actualizar_monto_por_subgastos()
+
+    def __str__(self):
+        return f"{self.nombre}: {self.monto} (Padre: {self.gasto_mes.codigo})"
+
+
 #INGRESOS
 
 class CategoriaIngreso(models.Model):
@@ -179,3 +225,6 @@ class IngresoMes(models.Model):
 
     def __str__(self):
         return f"{self.codigo}: {self.monto}"
+
+
+# Test de sincronización de Successify

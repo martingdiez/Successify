@@ -22,8 +22,6 @@
         </button>
     </form>
 
-
-
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h2> Presupuesto Anual | {{ year_actual }}</h2>
     <div style="font-size: 22px;">
@@ -33,8 +31,6 @@
     </div>
 </div>
 <hr>
-
-<!--LISTA DE GASTOMESES-->
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
     {% for item in meses_rango %}
@@ -49,42 +45,80 @@
             
             {% if item.mes_obj.cerrado %}
             {{ item.nombre }}🔒
-
             {% else %}
             {{ item.nombre }}
-
             {% endif %}
+
             {% if item.mes_obj.cerrado %}
                 <div class="info-gasto-cerrado" onclick="event.stopPropagation()">
                     <p style="font-size: 14px; font-weight: bold; margin: 5px 0;">
                         {{ item.gasto_mes.monto|default:"0.00" }}€
                     </p>
-                    <span style="font-size: 10px; color: #7f8c8d; font-style: italic;">
+                    {% for sub in item.subgastos %}
+                        <div style="font-size: 11px; color: #7f8c8d; background: #FFF9C4; padding: 1px 3px; margin-top: 2px; border-radius: 2px; display: flex; justify-content: space-between;">
+                            <span>{{ sub.nombre }}</span>
+                            <span>{{ sub.monto }}</span>
+                        </div>
+                    {% endfor %}
+                    <span style="font-size: 10px; color: #7f8c8d; font-style: italic; display: block; margin-top: 4px;">
                         Balance cerrado</span>
                 </div>
             {% else %}
                 {% if item.gasto_mes %}
                     <div class="info-gasto" onclick="event.stopPropagation()">
-                        <form action="{% url 'successify:nuevo_gasto_mes' gasto.codigo %}" method="post" style="display: flex; gap: 1px; margin-top: 5px;">
-                            {% csrf_token %}
-                            <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
-                            <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
-                            
-                            <input type="number" step="0.01" name="monto" value="{{ item.gasto_mes.monto }}" 
-                                style="width: 70%; font-weight: bold; font-size: 11px; padding: 2px;">
-                            
-                            <button type="submit" title="Guardar" 
-                                    style="background: #000; color: white; border: none; width: 30%;
-                                    cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                                ✔
-                            </button>
-                        </form>
+                        
+                        {% if item.subgastos %}
+                            <p style="font-size: 13px; font-weight: bold; margin: 5px 0;">{{ item.gasto_mes.monto }}€</p>
+                        {% else %}
+                            <form action="{% url 'successify:nuevo_gasto_mes' gasto.codigo %}" method="post" style="display: flex; gap: 1px; margin-top: 5px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="year" value="{{ item.mes_obj.year }}">
+                                <input type="hidden" name="month" value="{{ item.mes_obj.month }}"> 
+                                
+                                <input type="number" step="0.01" name="monto" value="{{ item.gasto_mes.monto }}" 
+                                    style="width: 70%; font-weight: bold; font-size: 11px; padding: 2px;">
+                                
+                                <button type="submit" title="Guardar" 
+                                        style="background: #000; color: white; border: none; width: 30%;
+                                        cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                    ✔
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <div class="subgastos-container">
+                            {% for sub in item.subgastos %}
+                                <div class="subgasto-row">
+                                    <form action="{% url 'successify:actualizar_subgasto' sub.id %}" method="post" class="subgasto-update-form">
+                                        {% csrf_token %}
+                                        <input type="text" name="nombre" value="{{ sub.nombre }}" class="input-subgasto-nombre" title="Nombre del subgasto">
+                                        <input type="number" step="0.01" name="monto" value="{{ sub.monto }}" class="input-subgasto-monto" title="Monto">
+                                        <button type="submit" class="btn-subgasto-check">✓</button>
+                                    </form>
+                                    <form action="{% url 'successify:eliminar_subgasto' sub.id %}" method="post" onsubmit="return confirm('¿Borrar subregistro?');" class="subgasto-delete-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-subgasto-delete" title="Eliminar subgasto">🗑</button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+
+                            {% if item.subgastos|length < 3 %}
+                                <form id="nuevo-sub-form-{{ item.gasto_mes.id }}" action="{% url 'successify:crear_subgasto' item.gasto_mes.id %}" method="post" class="subgasto-ghost-form" style="display: none;">
+                                    {% csrf_token %}
+                                    <input type="text" name="nombre" value="Sin registro" class="input-subgasto-nombre" onfocus="if(this.value=='Sin registro')this.value='';">
+                                    <input type="number" step="0.01" name="monto" value="0.00" class="input-subgasto-monto">
+                                    <button type="submit" class="btn-subgasto-check">✓</button>
+                                </form>
+
+                                <button type="button" id="btn-add-{{ item.gasto_mes.id }}" onclick="mostrarFormularioNuevo('{{ item.gasto_mes.id }}')" class="btn-subgasto-agregar">+</button>
+                            {% endif %}
+                        </div>
 
                         <form action="{% url 'successify:eliminar_gastomes' item.gasto_mes.codigo %}" 
                               method="post" 
-                              onsubmit="return confirm('¿Borrar {{item.nombre}}?');">
+                              onsubmit="return confirm('¿Borrar {{item.nombre}}?');" style="margin-top: 5px;">
                             {% csrf_token %}
-                            <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 11px; padding: 0;">
+                            <button type="submit" style="background: none; border: none; color: #d9534f; cursor: pointer; font-size: 11px; padding: 0; width: 100%; text-align: center;">
                                 🗑 Eliminar
                             </button>
                         </form>
@@ -119,6 +153,92 @@
     {% endfor %}
 </div>
 
+{% if messages %}
+    <div id="toast-container" style="position: fixed; top: 20px; left:50%; transform: translateX(-50%); z-index: 9999;">
+        {% for message in messages %}
+            <div class="toast-item" style="
+                background: #333; 
+                color: white; 
+                padding: 12px 20px; 
+                margin-bottom: 10px; 
+                border-radius: 4px; 
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                min-width: 200px;
+                border-left: 5px solid {% if message.tags == 'error' %}#d9534f{% else %}#5cb85c{% endif %};
+                ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        setTimeout(function() {
+            const container = document.getElementById('toast-container');
+            if (container) {
+                container.style.transition = "opacity 0.5s ease";
+                container.style.opacity = "0";
+                setTimeout(() => container.remove(), 500);
+            }
+        }, 3000);
+    </script>
+{% endif %}
+
+
+
+<script>
+function abrirMes(codigoMes, codigoGasto) {
+    const panelExistente = document.querySelector('.drawer');
+    
+    if (panelExistente) {
+        const codigoAbierto = panelExistente.getAttribute('data-codigo');
+        if (codigoAbierto === codigoMes) {
+            cerrarPanel();
+            return; 
+        } else {
+            panelExistente.remove();
+        }
+    }
+
+    let url = `/panelmes/${codigoMes}/`;
+    if (codigoGasto && codigoGasto !== "0") {
+        url += `?movimiento=${codigoGasto}`;
+    }
+
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            document.body.insertAdjacentHTML('beforeend', html);
+            const drawer = document.querySelector('.drawer');
+            if (drawer) { drawer.setAttribute('data-codigo', codigoMes); }
+            
+            setTimeout(() => {
+                const nuevoPanel = document.querySelector('.drawer');
+                if (nuevoPanel) {
+                    nuevoPanel.classList.add('active');
+                }
+            }, 10);
+        });
+}
+
+function cerrarPanel() {
+    const drawer = document.querySelector('.drawer');
+    if (drawer) {
+        drawer.classList.remove('active');
+        setTimeout(() => drawer.remove(), 300); 
+    }
+}
+
+function mostrarFormularioNuevo(gastoMesId) {
+    document.getElementById('nuevo-sub-form-' + gastoMesId).style.display = 'flex';
+    document.getElementById('btn-add-' + gastoMesId).style.display = 'none';
+}
+</script>
+
+<style>
+    .drawer.active {
+        right: 0 !important;
+    }
+</style>
 
 {% endblock content %}
-

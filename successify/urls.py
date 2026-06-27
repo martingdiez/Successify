@@ -30,11 +30,14 @@ urlpatterns = [
     #Añadir un gasto nuevo
     path('nuevo_gasto/', views.nuevo_gasto, name='nuevo_gasto'),
     #Añadir gastomes desde la página gastos
+    path('gasto-mes/<int:gastomes_id>/subgasto/nuevo/', views.crear_subgasto_mes, name='crear_subgasto'),
+    path('subgasto/<int:subgasto_id>/actualizar/', views.actualizar_subgasto, name='actualizar_subgasto'),
     path('nuevo_gasto_mes/<str:codigo>', views.nuevo_gasto_mes, name='nuevo_gasto_mes'),
     #Editar un gasto
     path('editar_gasto/<str:codigo>/', views.editar_gasto, name='editar_gasto'),    
     #Eliminar GastoMes
     path('eliminar_gastomes/<str:codigo_gastomes>/', views.eliminar_gastomes, name='eliminar_gastomes'),
+    path('subgasto/<int:subgasto_id>/eliminar/', views.eliminar_subgasto, name='eliminar_subgasto'),
     #Eliminar un gasto
     path('eliminar_gasto/<str:codigo>',views.eliminar_gasto, name='eliminar_gasto'),
     
